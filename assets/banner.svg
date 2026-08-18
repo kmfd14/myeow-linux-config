@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="300" viewBox="0 0 1200 300" role="img" aria-label="myeow linux config banner">
+  <rect width="1200" height="300" fill="#303446"/>
+  <text x="600" y="145" text-anchor="middle" fill="#c6d0f5" font-family="Segoe UI, Arial, sans-serif" font-size="48" font-weight="600">myeow linux config</text>
+  <text x="600" y="192" text-anchor="middle" fill="#a5adce" font-family="Segoe UI, Arial, sans-serif" font-size="20">Fedora · Arch · NixOS</text>
+  <rect x="0" y="288" width="300" height="12" fill="#ca9ee6"/>
+  <rect x="300" y="288" width="300" height="12" fill="#8caaee"/>
+  <rect x="600" y="288" width="300" height="12" fill="#a6d189"/>
+  <rect x="900" y="288" width="300" height="12" fill="#e5c890"/>
+</svg>

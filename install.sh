@@ -10,9 +10,13 @@ NERD_FONT_URL="https://github.com/ryanoasis/nerd-fonts/releases/latest/download/
 
 SKIP_PACKAGES=0
 SKIP_FONTS=0
+SKIP_GRUB=0
 DRY_RUN=0
 OS_FAMILY=""
 OS_PRETTY=""
+GRUB_THEME_NAME="catppuccin-mocha-grub-theme"
+GRUB_THEME_DEST="/usr/share/grub/themes/${GRUB_THEME_NAME}"
+GRUB_THEME_FILE="${GRUB_THEME_DEST}/theme.txt"
 
 if [[ -t 1 ]]; then
   C_RESET=$'\033[0m'
@@ -31,8 +35,8 @@ usage() {
 Usage: ./install.sh [options]
 
 Symlinks Kitty, zsh, and Cursor configs from this repo, then installs the
-packages, toolchains (bun, npm/npx, Rust, fastfetch), and Oh My Zsh plugins those
-configs expect.
+packages, toolchains (bun, npm/npx, Rust, fastfetch), Oh My Zsh plugins, and
+Catppuccin Mocha GRUB theme those configs expect.
 
 Supported systems: Fedora, Arch Linux, NixOS.
 
@@ -40,6 +44,7 @@ Options:
   -h, --help          Show this help
   --skip-packages     Do not install system packages or toolchains
   --skip-fonts        Do not install JetBrainsMono Nerd Font
+  --skip-grub         Do not install the GRUB theme
   --dry-run           Print actions without changing the system
 EOF
 }
@@ -170,8 +175,8 @@ install_packages() {
   esac
 }
 
-FEDORA_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs nodejs-npm)
-ARCH_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs npm)
+FEDORA_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs nodejs-npm grub2-tools)
+ARCH_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs npm grub)
 NIXOS_PACKAGES=(zsh git curl kitty unzip fontconfig gcc nodejs bun rustup fastfetch rbenv)
 
 install_packages_fedora() {
@@ -434,6 +439,71 @@ install_cursor() {
   symlink "$agent_skills" "$HOME/.cursor/agents/skills"
 }
 
+ensure_grub_key() {
+  local key="$1" value="$2" file="/etc/default/grub"
+
+  if (( DRY_RUN )); then
+    ok "Would set $key=$value in $file"
+    return 0
+  fi
+
+  if [[ ! -f "$file" ]]; then
+    warn "$file missing; skip GRUB key $key"
+    return 0
+  fi
+
+  if sudo_if_needed grep -q "^${key}=" "$file"; then
+    sudo_if_needed sed -i "s|^${key}=.*|${key}=${value}|" "$file"
+  else
+    printf '%s=%s\n' "$key" "$value" | sudo_if_needed tee -a "$file" >/dev/null
+  fi
+}
+
+install_grub() {
+  (( SKIP_GRUB )) && { warn "Skipping GRUB theme"; return 0; }
+
+  local src="$DOTFILES/grub/$GRUB_THEME_NAME"
+  [[ -f "$src/theme.txt" ]] || die "GRUB theme missing at $src"
+
+  if [[ "$OS_FAMILY" == nixos ]]; then
+    log "NixOS detected — skipping imperative GRUB theme install"
+    warn "Set boot.loader.grub.theme to $src, then rebuild"
+    return 0
+  fi
+
+  log "Installing Catppuccin Mocha GRUB theme"
+  if [[ -f /etc/default/grub ]] && (( ! DRY_RUN )); then
+    mkdir -p "$BACKUP_DIR/etc"
+    cp -a /etc/default/grub "$BACKUP_DIR/etc/grub" 2>/dev/null || \
+      sudo_if_needed cp -a /etc/default/grub "$BACKUP_DIR/etc/grub"
+  fi
+
+  sudo_if_needed mkdir -p "$GRUB_THEME_DEST"
+  sudo_if_needed cp -a "$src/." "$GRUB_THEME_DEST/"
+
+  ensure_grub_key GRUB_THEME "\"$GRUB_THEME_FILE\""
+  ensure_grub_key GRUB_GFXMODE "1920x1200,1920x1080,auto"
+
+  case "$OS_FAMILY" in
+    fedora)
+      if need_cmd grub2-mkconfig; then
+        sudo_if_needed grub2-mkconfig -o /boot/grub2/grub.cfg
+      else
+        warn "grub2-mkconfig not found; theme copied, regenerate GRUB yourself"
+      fi
+      ;;
+    arch)
+      if need_cmd grub-mkconfig; then
+        sudo_if_needed grub-mkconfig -o /boot/grub/grub.cfg
+      else
+        warn "grub-mkconfig not found; theme copied, regenerate GRUB yourself"
+      fi
+      ;;
+  esac
+
+  ok "GRUB theme $GRUB_THEME_NAME"
+}
+
 ensure_zsh_shell() {
   if [[ "$OS_FAMILY" == nixos ]]; then
     warn "On NixOS, set users.users.${USER:-youruser}.shell = pkgs.zsh; instead of chsh"
@@ -468,6 +538,7 @@ parse_args() {
       -h|--help) usage; exit 0 ;;
       --skip-packages) SKIP_PACKAGES=1 ;;
       --skip-fonts) SKIP_FONTS=1 ;;
+      --skip-grub) SKIP_GRUB=1 ;;
       --dry-run) DRY_RUN=1 ;;
       *) die "Unknown option: $1" ;;
     esac
@@ -502,6 +573,7 @@ main() {
   install_zshrc
   install_kitty
   install_cursor
+  install_grub
   ensure_zsh_shell
 
   printf '\n%sDone.%s Open a new terminal (or run: exec zsh).\n' "$C_GREEN" "$C_RESET"

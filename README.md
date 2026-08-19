@@ -5,16 +5,17 @@
 </p>
 
 Personal Linux dotfiles plus `install.sh`. The script detects Fedora,
-Arch, or NixOS, installs the tools these configs expect, and symlinks
-Kitty, zsh, and Cursor files into `$HOME`.
+Arch, or NixOS, installs the tools these configs expect, and installs
+Kitty, zsh, Cursor, and Catppuccin Mocha GRUB.
 
-Use it when you want this machine's shell, terminal, and Cursor skills
-reproduced on a supported distro without copying files by hand. It
-provides:
+Use it when you want this machine's shell, terminal, boot menu, and
+Cursor skills reproduced on a supported distro without copying files
+by hand. It provides:
 
 * Distro detection for Fedora, Arch Linux, and NixOS
 * Idempotent symlinks with timestamped backups
 * Oh My Zsh, Catppuccin Frappé, and zsh plugins
+* Catppuccin Mocha GRUB theme
 * bun, npm/npx, Rust, fastfetch, and JetBrainsMono Nerd Font
 
 > [!CAUTION]
@@ -44,6 +45,7 @@ This repository uses the following technologies:
 * Installs Fedora packages with `dnf`, Arch packages with `pacman`.
 * On NixOS, prints nixpkgs names to add before linking dotfiles.
 * Links Kitty, `.zshrc`, and Cursor skill directories.
+* Installs Catppuccin Mocha as the GRUB theme (Fedora/Arch).
 * Installs Oh My Zsh plus autosuggestions, syntax highlighting, and
   completions.
 * Skips work that is already done; safe to run again.
@@ -111,6 +113,7 @@ Link configs only, and skip packages, bun, rustup, and fastfetch:
 | `-h`, `--help` | Show this help |
 | `--skip-packages` | Do not install system packages or toolchains |
 | `--skip-fonts` | Do not install JetBrainsMono Nerd Font |
+| `--skip-grub` | Do not install the GRUB theme |
 | `--dry-run` | Print actions without changing the system |
 
 Linked paths:
@@ -122,10 +125,15 @@ Linked paths:
 | Catppuccin zsh theme | `~/.oh-my-zsh/custom/themes/` |
 | `dotfiles/cursor/skills/` | `~/.cursor/skills` |
 | `dotfiles/cursor/agents/skills/` | `~/.cursor/agents/skills` |
+| `dotfiles/grub/catppuccin-mocha-grub-theme/` | `/usr/share/grub/themes/catppuccin-mocha-grub-theme/` |
 
 Kitty uses Catppuccin Frappé, JetBrainsMono Nerd Font at size 9, hidden
 decorations, padding, and 0.85 background opacity. zsh uses Oh My Zsh
-theme `catppuccin` with `CATPPUCCIN_FLAVOR="frappe"`.
+theme `catppuccin` with `CATPPUCCIN_FLAVOR="frappe"`. GRUB uses
+Catppuccin Mocha at `1920x1200,1920x1080,auto`.
+
+On NixOS, `install.sh` does not write `/etc/default/grub`. Point
+`boot.loader.grub.theme` at the mocha theme in this repo, then rebuild.
 
 ## Soon
 
@@ -141,7 +149,7 @@ The next step is a flake so that machine is declared in-tree.
 * Use `nixos-rebuild switch --flake .#HOSTNAME` as the NixOS install
   path; keep Fedora and Arch on `install.sh`
 * Pull Catppuccin from nixpkgs or a Catppuccin flake where a module
-  already exists
+  already exists, including GRUB
 
 Until that lands, `install.sh` on NixOS only links dotfiles.
 
@@ -156,6 +164,7 @@ Until that lands, `install.sh` on NixOS only links dotfiles.
 └── dotfiles/
     ├── kitty/
     ├── oh-my-zsh/
+    ├── grub/
     └── cursor/
         ├── skills/
         └── agents/skills/
@@ -172,6 +181,7 @@ Until that lands, `install.sh` on NixOS only links dotfiles.
 | [install.sh](./install.sh) | Installer source and `--help` text |
 | [kitty.conf](./dotfiles/kitty/kitty.conf) | Kitty appearance |
 | [.zshrc](./dotfiles/oh-my-zsh/.zshrc) | Oh My Zsh, PATH, and fastfetch |
+| [GRUB default](./dotfiles/grub/default) | Theme and gfxmode used on this machine |
 
 ## Credits
 
@@ -183,6 +193,7 @@ projects:
 | Oh My Zsh | [ohmyzsh/ohmyzsh](https://github.com/ohmyzsh/ohmyzsh) |
 | Catppuccin for zsh | [JannoTjarks/catppuccin-zsh](https://github.com/JannoTjarks/catppuccin-zsh) |
 | Catppuccin for Kitty | [catppuccin/kitty](https://github.com/catppuccin/kitty) |
+| Catppuccin for GRUB | [catppuccin/grub](https://github.com/catppuccin/grub) |
 | zsh-autosuggestions | [zsh-users/zsh-autosuggestions](https://github.com/zsh-users/zsh-autosuggestions) |
 | zsh-syntax-highlighting | [zsh-users/zsh-syntax-highlighting](https://github.com/zsh-users/zsh-syntax-highlighting) |
 | zsh-completions | [zsh-users/zsh-completions](https://github.com/zsh-users/zsh-completions) |

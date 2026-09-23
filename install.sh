@@ -90,7 +90,7 @@ plugins, and Catppuccin Mocha GRUB theme those configs expect.
 Optionally installs a Wayland compositor (SwayFX, Niri, Hyprland), an optional
 desktop shell (Noctalia, DankMaterial, Caelestia), New Wave Rofi or Noctalia
 launcher, Catppuccin Mocha SDDM, AMD GPU stack, video codecs, zram tweaks,
-gamemode/gamescope/Steam, podman, and Flathub apps.
+gamemode/gamescope/Steam, podman, cloudflared, and Flathub apps.
 
 Supported systems: Fedora, Arch Linux.
 
@@ -1320,6 +1320,88 @@ install_podman() {
   ok "podman attempted"
 }
 
+enable_cloudflared_fedora_repo() {
+  local repo="/etc/yum.repos.d/cloudflared.repo"
+  if (( DRY_RUN )); then
+    ok "Would add Cloudflare cloudflared.repo"
+    return 0
+  fi
+  if [[ -f "$repo" ]]; then
+    # Prefer stable pkg.cloudflare.com baseurl if a broken beta host is present
+    if grep -q 'pkg-beta.tun.cfdata.org' "$repo" 2>/dev/null; then
+      sudo_if_needed sed -i \
+        's|https://pkg-beta.tun.cfdata.org/cloudflared/rpm|https://pkg.cloudflare.com/cloudflared/rpm|g' \
+        "$repo" || true
+      ok "Fixed cloudflared.repo baseurl"
+    else
+      ok "cloudflared.repo already present"
+    fi
+    return 0
+  fi
+  curl -fsSL https://pkg.cloudflare.com/cloudflared.repo \
+    | sudo_if_needed tee "$repo" >/dev/null \
+    || { warn "Could not write cloudflared.repo"; return 1; }
+  if grep -q 'pkg-beta.tun.cfdata.org' "$repo" 2>/dev/null; then
+    sudo_if_needed sed -i \
+      's|https://pkg-beta.tun.cfdata.org/cloudflared/rpm|https://pkg.cloudflare.com/cloudflared/rpm|g' \
+      "$repo" || true
+  fi
+  ok "Added Cloudflare cloudflared.repo"
+}
+
+install_cloudflared_github() {
+  local arch tarball url tmp dest="/usr/local/bin/cloudflared"
+  case "$(uname -m)" in
+    x86_64) arch=amd64 ;;
+    aarch64|arm64) arch=arm64 ;;
+    *) warn "No cloudflared GitHub binary for $(uname -m)"; return 1 ;;
+  esac
+  url="https://github.com/cloudflare/cloudflared/releases/latest/download/cloudflared-linux-${arch}"
+  if (( DRY_RUN )); then
+    ok "Would download $url → $dest"
+    return 0
+  fi
+  tmp="$(mktemp)"
+  curl -fsSL "$url" -o "$tmp" || { rm -f "$tmp"; return 1; }
+  sudo_if_needed install -m 755 "$tmp" "$dest"
+  rm -f "$tmp"
+  ok "cloudflared installed to $dest"
+}
+
+install_cloudflared() {
+  (( SKIP_PACKAGES )) && { warn "Skipping cloudflared"; return 0; }
+
+  if need_cmd cloudflared; then
+    ok "cloudflared already on PATH"
+    return 0
+  fi
+
+  log "Installing cloudflared (for Jellyfin Cloudflare tunnels)"
+  case "$OS_FAMILY" in
+    fedora)
+      enable_cloudflared_fedora_repo || true
+      if try_pkg_install cloudflared; then
+        ok "cloudflared from Cloudflare repo"
+      else
+        warn "dnf cloudflared failed — trying GitHub binary"
+        install_cloudflared_github || warn "cloudflared install failed"
+      fi
+      ;;
+    arch)
+      if try_pkg_install cloudflared; then
+        ok "cloudflared from pacman"
+      else
+        warn "pacman cloudflared missing — installing GitHub binary"
+        install_cloudflared_github || warn "cloudflared install failed"
+      fi
+      ;;
+  esac
+
+  if need_cmd cloudflared || (( DRY_RUN )); then
+    ok "cloudflared ready — configure your tunnel with: cloudflared tunnel login"
+  fi
+}
+
 install_flatpak_repo() {
   (( SKIP_PACKAGES )) && { warn "Skipping flatpak"; return 0; }
   try_pkg_install flatpak || true
@@ -1427,7 +1509,7 @@ count_install_steps() {
   if (( ! SKIP_DESKTOP )); then
     n=$((n + 4))
   fi
-  n=$((n + 5)) # amd codecs perf gaming podman
+  n=$((n + 6)) # amd codecs perf gaming podman cloudflared
   if (( ! SKIP_APPS )); then
     n=$((n + 1))
   fi
@@ -1482,6 +1564,7 @@ main() {
   with_spinner "Applying performance tweaks" install_performance_tweaks || true
   with_spinner "Installing gaming packages" install_gaming || true
   with_spinner "Installing podman" install_podman || true
+  with_spinner "Installing cloudflared" install_cloudflared || true
 
   if (( ! SKIP_APPS )); then
     with_spinner "Installing Flatpak apps + Cursor" install_flatpak_apps || true
@@ -1494,6 +1577,7 @@ main() {
     printf 'Desktop: start a %s session from SDDM (or your login manager).\n' "$COMPOSITOR"
   fi
   printf 'Gaming: gamemoderun gamescope -- steam\n'
+  printf 'Jellyfin tunnel: cloudflared tunnel run <name>  (after cloudflared tunnel login)\n'
   if [[ -d "$BACKUP_DIR" ]]; then
     printf 'Backups: %s\n' "$BACKUP_DIR"
   fi

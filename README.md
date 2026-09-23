@@ -57,7 +57,7 @@ This repository uses the following technologies:
 * Detects AMD GPUs (e.g. Radeon 890M) and installs Mesa / Vulkan / VA-API.
 * Enables RPM Fusion (Fedora) and installs ffmpeg + GStreamer codecs.
 * Configures zram (half of RAM, zstd) and enables power-profiles-daemon.
-* Installs gamemode, gamescope, native Steam, and podman.
+* Installs gamemode, gamescope, native Steam, podman, and cloudflared.
 * Adds Flathub and installs a set of desktop Flatpaks; Cursor via official script.
 * Installs Oh My Zsh plus autosuggestions, syntax highlighting, and
   completions.
@@ -158,6 +158,23 @@ not installed.
 * `gamemode`, `gamescope`, and **Steam** from the distro / RPM Fusion
 * Launch pattern: `gamemoderun gamescope -- steam`
 * Steam is not installed as a Flatpak so wrappers work
+
+### cloudflared (Jellyfin tunnels)
+
+Installs the Cloudflare tunnel client for exposing Jellyfin (and other
+services) via Cloudflare:
+
+* Fedora: Cloudflare RPM repo (`pkg.cloudflare.com`), with GitHub binary fallback
+* Arch: pacman if available, otherwise GitHub binary
+
+The installer does **not** create or login a tunnel. After install, use your
+existing flow, for example:
+
+```bash
+cloudflared tunnel login
+cloudflared tunnel run <your-tunnel-name>
+# or: sudo systemctl enable --now cloudflared
+```
 
 ### Flatpak apps
 

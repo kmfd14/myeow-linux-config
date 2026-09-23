@@ -1,27 +1,26 @@
 # myeow linux config
 
 <p align="center">
-  <img src="./assets/banner.svg" alt="myeow linux config: dotfiles and installer for Fedora, Arch, and NixOS" width="100%">
+  <img src="./assets/banner.svg" alt="myeow linux config: dotfiles and installer for Fedora and Arch" width="100%">
 </p>
 
-Personal Linux dotfiles plus `install.sh`. The script detects Fedora,
-Arch, or NixOS, installs the tools these configs expect, and installs
-Kitty, zsh, Cursor, and Catppuccin Mocha GRUB.
+Personal Linux dotfiles plus `install.sh`. The script detects Fedora or
+Arch, installs the tools these configs expect, and installs Kitty, zsh,
+Cursor, Oh My Posh, and Catppuccin Mocha GRUB.
 
 Use it when you want this machine's shell, terminal, boot menu, and
 Cursor skills reproduced on a supported distro without copying files
 by hand. It provides:
 
-* Distro detection for Fedora, Arch Linux, and NixOS
+* Distro detection for Fedora and Arch Linux
 * Idempotent symlinks with timestamped backups
-* Oh My Zsh plugins and Oh My Posh (Catppuccin Frappé prompt)
+* Oh My Zsh plugins and Oh My Posh (Catppuccin prompt)
 * Catppuccin Mocha GRUB theme
 * bun, npm/npx, Rust, fastfetch, and JetBrainsMono Nerd Font
 
 > [!CAUTION]
 > This is a personal setup, published for viewing. It is not a
-> general-purpose distro installer. Unsupported systems exit; NixOS
-> does not get `dnf` or `pacman` installs.
+> general-purpose distro installer. Unsupported systems exit.
 
 ## Tech stack
 
@@ -32,7 +31,6 @@ This repository uses the following technologies:
   <img src="https://cdn.simpleicons.org/zsh" width="32" height="32" alt="Zsh">
   <img src="https://cdn.simpleicons.org/fedora" width="32" height="32" alt="Fedora">
   <img src="https://cdn.simpleicons.org/archlinux" width="32" height="32" alt="Arch Linux">
-  <img src="https://cdn.simpleicons.org/nixos" width="32" height="32" alt="NixOS">
   <img src="https://cdn.simpleicons.org/nodedotjs" width="32" height="32" alt="Node.js">
   <img src="https://cdn.simpleicons.org/bun" width="32" height="32" alt="Bun">
   <img src="https://cdn.simpleicons.org/rust" width="32" height="32" alt="Rust">
@@ -41,12 +39,11 @@ This repository uses the following technologies:
 
 ## Features
 
-* Detects the OS from `/etc/os-release` (and `/etc/NIXOS`).
+* Detects the OS from `/etc/os-release`.
 * Installs Fedora packages with `dnf`, Arch packages with `pacman`.
-* On NixOS, prints nixpkgs names to add before linking dotfiles.
-* Links Kitty, `.zshrc`, and Cursor skill directories.
+* Links Kitty, `.zshrc`, Oh My Posh theme, and Cursor skill directories.
 * Installs Oh My Posh with Catppuccin.
-* Installs Catppuccin Mocha as the GRUB theme (Fedora/Arch).
+* Installs Catppuccin Mocha as the GRUB theme.
 * Installs Oh My Zsh plus autosuggestions, syntax highlighting, and
   completions.
 * Skips work that is already done; safe to run again.
@@ -56,18 +53,16 @@ flowchart TD
   start["install.sh"] --> os{"Detect OS"}
   os -->|Fedora| fedora["dnf packages"]
   os -->|Arch| arch["pacman packages"]
-  os -->|NixOS| nix["Print nixpkgs list"]
   os -->|Other| fail["Exit unsupported"]
   fedora --> tools["bun, rustup, fastfetch, oh-my-posh"]
   arch --> tools
   tools --> links["Link dotfiles"]
-  nix --> links
 ```
 
 ## Install
 
-You need Fedora, Arch Linux, or NixOS, plus `git` and `curl` on the
-PATH. Network access is required for Oh My Zsh, plugins, bun, rustup,
+You need Fedora or Arch Linux, plus `git` and `curl` on the PATH.
+Network access is required for Oh My Zsh, plugins, bun, rustup,
 Oh My Posh, and the Nerd Font.
 
 1. Copy this repository onto the machine.
@@ -82,14 +77,6 @@ chmod +x install.sh
 4. Open a new terminal, or run `exec zsh`.
 
 Replaced files go to `~/.dotfiles-backup/<timestamp>/`.
-
-### NixOS
-
-`install.sh` does not install system packages on NixOS. Add the printed
-names to `environment.systemPackages` or `home.packages`, set
-`users.users.YOUR-USER.shell = pkgs.zsh;`, add
-`pkgs.nerd-fonts.jetbrains-mono` to `fonts.packages`, then rebuild.
-Dotfile symlinks still run.
 
 ## Quick start
 
@@ -126,7 +113,7 @@ Linked paths:
 | Catppuccin zsh theme | `~/.oh-my-zsh/custom/themes/` |
 | `dotfiles/cursor/skills/` | `~/.cursor/skills` |
 | `dotfiles/cursor/agents/skills/` | `~/.cursor/agents/skills` |
-| `dotfiles/oh-my-posh/themes/catppuccin.omp.json` | `~/.config/oh-my-posh/themes/catppuccin.omp.json` |
+| `dotfiles/oh-my-posh/themes/catppuccin.omp.json` | `~/.oh-my-posh/themes/catppuccin.omp.json` |
 | `dotfiles/grub/catppuccin-mocha-grub-theme/` | `/usr/share/grub/themes/catppuccin-mocha-grub-theme/` |
 
 Kitty uses Catppuccin Frappé, JetBrainsMono Nerd Font at size 9, hidden
@@ -134,26 +121,14 @@ decorations, padding, and 0.85 background opacity. The prompt uses
 Oh My Posh with Catppuccin (`ZSH_THEME=""`). GRUB uses
 Catppuccin Mocha at `1920x1200,1920x1080,auto`.
 
-On NixOS, `install.sh` does not write `/etc/default/grub`. Point
-`boot.loader.grub.theme` at the mocha theme in this repo, then rebuild.
+Use a Nerd Font in every terminal that shows the prompt (Kitty and
+Cursor’s integrated terminal both need `JetBrainsMono Nerd Font`).
 
 ## Soon
 
-This repo still treats NixOS as “print packages, then rebuild yourself.”
-The next step is a flake so that machine is declared in-tree.
-
-* Add a `flake.nix` with a `nixosConfigurations` (and later
-  `homeConfigurations`) entry for this setup
-* Move the current NixOS package list — zsh, Kitty, bun, rustup,
-  fastfetch, fonts — into the flake instead of a printed hint
-* Express Kitty, zsh, and Cursor skill paths as home-manager modules
-  so NixOS does not rely on `install.sh` symlinks alone
-* Use `nixos-rebuild switch --flake .#HOSTNAME` as the NixOS install
-  path; keep Fedora and Arch on `install.sh`
-* Pull Catppuccin from nixpkgs or a Catppuccin flake where a module
-  already exists, including GRUB
-
-Until that lands, `install.sh` on NixOS only links dotfiles.
+* More Oh My Posh theme variants under `dotfiles/oh-my-posh/themes/`
+* Optional Cursor `settings.json` snippet for the Nerd Font terminal
+* Trim unused Cursor skills from the install set
 
 ## Layout
 

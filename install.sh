@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# Install myeow Linux dotfiles on Fedora, Arch Linux, or NixOS.
+# Install myeow Linux dotfiles on Fedora or Arch Linux.
 set -euo pipefail
 
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
@@ -38,7 +38,7 @@ Symlinks Kitty, zsh, and Cursor configs from this repo, then installs the
 packages, toolchains (bun, npm/npx, Rust, fastfetch, oh-my-posh), Oh My Zsh
 plugins, and Catppuccin Mocha GRUB theme those configs expect.
 
-Supported systems: Fedora, Arch Linux, NixOS.
+Supported systems: Fedora, Arch Linux.
 
 Options:
   -h, --help          Show this help
@@ -143,9 +143,7 @@ detect_os() {
   id_like="${id_like,,}"
   OS_PRETTY="${pretty:-Linux}"
 
-  if [[ -e /etc/NIXOS || "$id" == nixos ]]; then
-    OS_FAMILY=nixos
-  elif [[ "$id" == fedora || " $id_like " == *" fedora "* ]]; then
+  if [[ "$id" == fedora || " $id_like " == *" fedora "* ]]; then
     OS_FAMILY=fedora
   elif [[ "$id" == arch || " $id_like " == *" arch "* ]]; then
     OS_FAMILY=arch
@@ -158,9 +156,9 @@ require_supported_os() {
   detect_os
 
   case "$OS_FAMILY" in
-    fedora|arch|nixos) ;;
+    fedora|arch) ;;
     *)
-      die "Unsupported system: ${OS_PRETTY}. This installer supports Fedora, Arch Linux, and NixOS."
+      die "Unsupported system: ${OS_PRETTY}. This installer supports Fedora and Arch Linux."
       ;;
   esac
 }
@@ -171,13 +169,11 @@ install_packages() {
   case "$OS_FAMILY" in
     fedora) install_packages_fedora ;;
     arch)   install_packages_arch ;;
-    nixos)  install_packages_nixos ;;
   esac
 }
 
 FEDORA_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs nodejs-npm grub2-tools)
 ARCH_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs npm grub)
-NIXOS_PACKAGES=(zsh git curl kitty unzip fontconfig gcc nodejs bun rustup fastfetch rbenv oh-my-posh)
 
 install_packages_fedora() {
   log "Installing Fedora packages: ${FEDORA_PACKAGES[*]}"
@@ -191,15 +187,6 @@ install_packages_arch() {
   confirm_node_tools
 }
 
-install_packages_nixos() {
-  log "NixOS detected — skipping imperative package installs"
-  warn "Add these to environment.systemPackages or home.packages, then rebuild:"
-  printf '  %s\n' "${NIXOS_PACKAGES[*]}"
-  printf '\n  users.users.%s.shell = pkgs.zsh;\n' "${USER:-youruser}"
-  printf '  fonts.packages = [ pkgs.nerd-fonts.jetbrains-mono ];\n\n'
-  ok "Dotfiles will still be linked into $HOME"
-}
-
 confirm_node_tools() {
   if need_cmd npm && need_cmd npx; then
     ok "npm and npx ready"
@@ -210,15 +197,6 @@ confirm_node_tools() {
   fi
 }
 
-skip_impure_on_nixos() {
-  local name="$1"
-  if [[ "$OS_FAMILY" == nixos ]]; then
-    warn "On NixOS, install $name from nixpkgs instead of the upstream installer"
-    return 0
-  fi
-  return 1
-}
-
 cmd_exists() {
   need_cmd "$1" && return 0
   [[ -x "$2" ]]
@@ -226,7 +204,6 @@ cmd_exists() {
 
 install_bun() {
   (( SKIP_PACKAGES )) && { warn "Skipping bun"; return 0; }
-  skip_impure_on_nixos bun && return 0
 
   local bun_bin="$HOME/.bun/bin/bun"
   if cmd_exists bun "$bun_bin"; then
@@ -253,8 +230,6 @@ install_oh_my_posh() {
 
   if (( SKIP_PACKAGES )); then
     warn "Skipping oh-my-posh binary install"
-  elif [[ "$OS_FAMILY" == nixos ]]; then
-    warn "On NixOS, install oh-my-posh from nixpkgs instead of the upstream installer"
   elif cmd_exists oh-my-posh "$omp_bin"; then
     ok "oh-my-posh already installed"
   else
@@ -275,7 +250,6 @@ install_oh_my_posh() {
 
 install_rust() {
   (( SKIP_PACKAGES )) && { warn "Skipping Rust"; return 0; }
-  skip_impure_on_nixos rustup && return 0
 
   local cargo_bin="$HOME/.cargo/bin/cargo"
   if cmd_exists cargo "$cargo_bin" && cmd_exists rustc "$HOME/.cargo/bin/rustc"; then
@@ -295,7 +269,6 @@ install_rust() {
 
 install_fastfetch() {
   (( SKIP_PACKAGES )) && { warn "Skipping fastfetch"; return 0; }
-  skip_impure_on_nixos fastfetch && return 0
 
   if cmd_exists fastfetch "$HOME/.local/bin/fastfetch"; then
     ok "fastfetch already installed"
@@ -494,12 +467,6 @@ install_grub() {
   local src="$DOTFILES/grub/$GRUB_THEME_NAME"
   [[ -f "$src/theme.txt" ]] || die "GRUB theme missing at $src"
 
-  if [[ "$OS_FAMILY" == nixos ]]; then
-    log "NixOS detected — skipping imperative GRUB theme install"
-    warn "Set boot.loader.grub.theme to $src, then rebuild"
-    return 0
-  fi
-
   log "Installing Catppuccin Mocha GRUB theme"
   if [[ -f /etc/default/grub ]] && (( ! DRY_RUN )); then
     mkdir -p "$BACKUP_DIR/etc"
@@ -534,11 +501,6 @@ install_grub() {
 }
 
 ensure_zsh_shell() {
-  if [[ "$OS_FAMILY" == nixos ]]; then
-    warn "On NixOS, set users.users.${USER:-youruser}.shell = pkgs.zsh; instead of chsh"
-    return 0
-  fi
-
   local zsh_path
   zsh_path="$(command -v zsh || true)"
   [[ -n "$zsh_path" ]] || { warn "zsh not on PATH; skip default-shell change"; return 0; }
@@ -590,11 +552,9 @@ main() {
 
   log "Using $OS_FAMILY install flow"
   install_packages
-  if [[ "$OS_FAMILY" != nixos ]]; then
-    install_bun
-    install_rust
-    install_fastfetch
-  fi
+  install_bun
+  install_rust
+  install_fastfetch
   install_oh_my_posh
   install_nerd_font
   install_oh_my_zsh

@@ -1606,15 +1606,44 @@ main() {
   fi
 
   ensure_zsh_shell
+  print_post_install_notes
+}
 
-  printf '\n%sDone.%s Open a new terminal (or run: exec zsh).\n' "$C_GREEN" "$C_RESET"
-  if (( ! SKIP_DESKTOP )); then
-    printf 'Desktop: start a %s session from SDDM (or your login manager).\n' "$COMPOSITOR"
-  fi
-  printf 'Gaming: gamemoderun gamescope -- steam\n'
-  printf 'Jellyfin tunnel: cloudflared tunnel run <name>  (after cloudflared tunnel login)\n'
+print_post_install_notes() {
+  printf '\n%sDone.%s\n' "$C_GREEN" "$C_RESET"
   if [[ -d "$BACKUP_DIR" ]]; then
     printf 'Backups: %s\n' "$BACKUP_DIR"
+  fi
+
+  printf '\n%s── Apply changes ──%s\n' "$C_TEAL" "$C_RESET"
+
+  printf '\n%sNew shell only%s (prompt, PATH, fonts in this terminal):\n' "$C_BOLD" "$C_RESET"
+  printf '  exec zsh\n'
+  printf '  # or open a new terminal window\n'
+
+  printf '\n%sLog out / new graphical session%s (desktop, SDDM, compositor, shell):\n' "$C_BOLD" "$C_RESET"
+  if (( ! SKIP_DESKTOP )); then
+    printf '  # Pick %s at the SDDM session list after logout\n' "$COMPOSITOR"
+  fi
+  printf '  loginctl terminate-session "$XDG_SESSION_ID"\n'
+  printf '  # or end every session for this user:\n'
+  printf '  loginctl terminate-user "$(id -un)"\n'
+  printf '  # then sign in again from SDDM / the login screen\n'
+
+  printf '\n%sReboot required%s (kernel cmdline, GRUB theme, zram, GPU/firmware stacks):\n' "$C_BOLD" "$C_RESET"
+  printf '  systemctl reboot\n'
+  if (( ! SKIP_GRUB )); then
+    printf '  # GRUB theme + amdgpu.gttsize take effect on the next boot\n'
+  fi
+  printf '  # zram-generator and new firmware/Mesa often need a reboot too\n'
+
+  printf '\n%sHandy commands%s\n' "$C_BOLD" "$C_RESET"
+  printf '  Gaming:          gamemoderun gamescope -- steam\n'
+  printf '  Jellyfin tunnel: cloudflared tunnel login && cloudflared tunnel run <name>\n'
+  printf '  System monitor:  btop\n'
+  printf '  Files (TUI):     yazi\n'
+  if (( ! SKIP_DESKTOP )); then
+    printf '  Files (GUI):     thunar\n'
   fi
 }
 

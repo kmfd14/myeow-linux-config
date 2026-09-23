@@ -4,32 +4,47 @@
   <img src="./assets/banner.svg" alt="myeow linux config: dotfiles and installer for Fedora and Arch" width="100%">
 </p>
 
-Personal Linux dotfiles plus `install.sh`. The script detects Fedora or
-Arch, installs the tools these configs expect, and installs Kitty, zsh,
-Cursor, Oh My Posh, and Catppuccin Mocha GRUB. Interactively (or via
-flags) it can also install a Wayland compositor, an optional desktop
-shell, New Wave Rofi, and Catppuccin Mocha SDDM.
+<p align="center">
+  <a href="https://github.com/kmfd14/myeow-linux-config"><img src="https://img.shields.io/github/last-commit/kmfd14/myeow-linux-config" alt="Last commit"></a>
+  <a href="https://github.com/kmfd14/myeow-linux-config/stargazers"><img src="https://img.shields.io/github/stars/kmfd14/myeow-linux-config" alt="Stars"></a>
+  <a href="https://github.com/kmfd14/myeow-linux-config/issues"><img src="https://img.shields.io/github/issues/kmfd14/myeow-linux-config" alt="Issues"></a>
+</p>
 
-Use it when you want this machine's shell, terminal, boot menu, desktop,
-and Cursor skills reproduced on a supported distro without copying files
-by hand. It provides:
+Personal Linux dotfiles plus `install.sh`. The script detects Fedora or Arch,
+installs the tools these configs expect (Kitty, zsh, Cursor, Oh My Posh,
+Catppuccin Mocha GRUB), and can install a Wayland compositor, desktop shell,
+New Wave Rofi, and Catppuccin Mocha SDDM.
+
+Use it when you want this machine's shell, terminal, boot menu, desktop, and
+Cursor skills reproduced on a supported distro without copying files by hand.
+
+It provides:
 
 * Distro detection for Fedora and Arch Linux
 * Idempotent symlinks with timestamped backups
-* Oh My Zsh plugins and Oh My Posh (Catppuccin prompt)
-* Catppuccin Mocha GRUB theme
-* Optional Wayland rice: **SwayFX** / Niri / Hyprland plus Noctalia,
-  DankMaterialShell, Caelestia, or compositor-only
-* bun, npm/npx, Rust, **Ruby 4.0.2 (rbenv)**, GitHub CLI (`gh`), ripgrep/fd/fzf/jq/tmux,
-  fastfetch, btop, yazi, Thunar, Okular, and JetBrainsMono Nerd Font
+* Oh My Zsh, Oh My Posh (Catppuccin), Catppuccin Mocha GRUB
+* Optional Wayland rice: SwayFX / Niri / Hyprland plus Noctalia,
+  DankMaterialShell, Caelestia, or compositor-only (`shell=none` + waybar)
+* Dev toolchain: bun, npm/npx, Rust, Ruby 4.0.2 (rbenv), `gh`,
+  ripgrep / fd / fzf / jq / tmux, JetBrainsMono Nerd Font
 
 > [!CAUTION]
 > This is a personal setup, published for viewing. It is not a
 > general-purpose distro installer. Unsupported systems exit.
 
-## Tech stack
+## Navigate
 
-This repository uses the following technologies:
+| Goal | Go here |
+| --- | --- |
+| Install on this machine | [Install](#install) |
+| Preview without changing anything | [Quick start](#quick-start) |
+| Pick compositor / shell / launcher | [Desktop](#desktop) |
+| Laptop keys, power, printers | [Laptop controls](#laptop-controls) |
+| Ruby, `gh`, CLI search tools | [Dev tools](#dev-tools) |
+| Flags and linked paths | [Configuration](#configuration) |
+| Deeper file guides | [Documentation](#documentation) |
+
+## Tech stack
 
 <p align="left">
   <img src="https://cdn.simpleicons.org/gnubash" width="32" height="32" alt="GNU Bash">
@@ -39,32 +54,37 @@ This repository uses the following technologies:
   <img src="https://cdn.simpleicons.org/nodedotjs" width="32" height="32" alt="Node.js">
   <img src="https://cdn.simpleicons.org/bun" width="32" height="32" alt="Bun">
   <img src="https://cdn.simpleicons.org/rust" width="32" height="32" alt="Rust">
+  <img src="https://cdn.simpleicons.org/ruby" width="32" height="32" alt="Ruby">
+  <img src="https://cdn.simpleicons.org/github" width="32" height="32" alt="GitHub">
   <img src="https://cdn.simpleicons.org/cursor" width="32" height="32" alt="Cursor">
 </p>
 
 ## Features
 
-* Detects the OS from `/etc/os-release`.
-* Installs Fedora packages with `dnf`, Arch packages with `pacman`.
-* Links Kitty, `.zshrc`, Oh My Posh theme, and Cursor skill directories.
-* Installs Oh My Posh with Catppuccin.
-* Installs Catppuccin Mocha as the GRUB theme.
-* Offers a Catppuccin-styled compositor menu (**SwayFX**, Niri, Hyprland) and
-  desktop shell menu (Noctalia, Material, Celestial, None).
-* When Noctalia is selected, offers an app launcher menu (Rofi or Noctalia
-  built-in); **Super+Space** opens the chosen launcher.
-* Links New Wave Rofi (when selected), installs Catppuccin Mocha SDDM, and
-  writes shell/menu snippets for the chosen compositor.
-* Detects AMD GPUs (e.g. Radeon 890M) and installs Mesa / Vulkan / VA-API.
-* Enables RPM Fusion (Fedora) and installs ffmpeg + GStreamer codecs.
-* Configures zram (half of RAM, zstd) and enables power-profiles-daemon.
-* Installs gamemode, gamescope, native Steam, podman, and cloudflared.
-* Adds Flathub and installs a set of desktop Flatpaks; Cursor via official script.
-* Installs Oh My Zsh plus autosuggestions, syntax highlighting, and
-  completions.
-* Installs GitHub CLI (`gh`), CLI search tools (`ripgrep`, `fd`, `fzf`, `jq`,
-  `tmux`), Ruby build deps, and **Ruby 4.0.2** via rbenv.
-* Skips work that is already done; safe to run again.
+**Install flow**
+
+* Detects OS from `/etc/os-release` (Fedora → `dnf`, Arch → `pacman`)
+* Idempotent: safe to re-run; backups under `~/.dotfiles-backup/<timestamp>/`
+* Interactive menus or flags for compositor, shell, launcher, SDDM
+
+**Desktop**
+
+* SwayFX (default), Niri, or Hyprland; Noctalia / Material / Celestial / none
+* Super+Space launcher (Rofi or Noctalia); Super+w opens Brave Flatpak
+* PipeWire, portals, polkit, Thunar+gvfs, CUPS, lid→suspend, waybar when
+  `shell=none`
+
+**Dev**
+
+* bun, Rust (rustup), Ruby 4.0.2 via rbenv + build deps
+* GitHub CLI (`gh`), ripgrep, fd, fzf, jq, tmux
+* Cursor (official script), VS Code / Sublime / DBeaver Flatpaks
+
+**Hardware and apps**
+
+* AMD Mesa / Vulkan / VA-API when an AMD GPU is detected
+* zram (half RAM, zstd) and power-profiles-daemon (not TLP)
+* Flatpaks including Proton Pass, Proton VPN, Brave, and the rest listed below
 
 ```mermaid
 flowchart TD
@@ -81,226 +101,212 @@ flowchart TD
 
 ## Install
 
-You need Fedora or Arch Linux, plus `git` and `curl` on the PATH.
-Network access is required for Oh My Zsh, plugins, bun, rustup,
-Oh My Posh, and the Nerd Font.
+You need Fedora or Arch, with `git` and `curl` on PATH. Network is required for
+Oh My Zsh, plugins, bun, rustup, Oh My Posh, Ruby build, and the Nerd Font.
 
-1. Copy this repository onto the machine.
+1. Clone or copy this repository onto the machine.
 2. Open a terminal in the repository root.
-3. Make the installer executable and run it:
+3. Run:
 
 ```bash
 chmod +x install.sh
 ./install.sh
 ```
 
-4. Answer the compositor and desktop shell prompts (or pass flags).
-5. Open a new terminal, or run `exec zsh`. Log in through SDDM for a
-   Wayland session when you enabled the desktop path.
+4. Answer compositor / shell / launcher prompts (or pass [flags](#configuration)).
+5. Apply the shell: `exec zsh` (or open a new terminal).
+6. For Wayland + SDDM: log out and sign in again (or reboot if GRUB / zram /
+   lid rules need it).
 
 Replaced files go to `~/.dotfiles-backup/<timestamp>/`.
 
-## Desktop choices
-
-On an interactive terminal, after OS detection, `install.sh` shows numbered
-menus (skipped when the matching flag is set):
-
-1. **Compositor** — `1` SwayFX (default), `2` Niri, `3` Hyprland
-2. **Desktop shell** — `1` Noctalia, `2` Material (DankMaterialShell),
-   `3` Celestial (Caelestia), `4` None
-3. **App launcher** (only if shell is Noctalia) — `1` Rofi (New Wave),
-   `2` Noctalia built-in
-
-It then confirms compositor, shell, launcher, and whether to enable SDDM
-(default yes). **Super** is the Windows key (`Mod4`).
-**Super+w** opens Brave (Flatpak `com.brave.Browser`).
-
-Shell names map to upstream projects (not zsh):
-
-| Choice | Upstream |
-| --- | --- |
-| `noctalia` | [noctalia-dev/noctalia-shell](https://github.com/noctalia-dev/noctalia-shell) |
-| `material` | [AvengeMedia/DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) |
-| `celestial` | [caelestia-dots/shell](https://github.com/caelestia-dots/shell) |
-| `none` | Compositor only — mako, nm-applet, blueman-applet, and **waybar** |
-
-### Desktop plumbing
-
-When the desktop path runs, the installer also installs:
-
-* PipeWire + WirePlumber, `pavucontrol`, `blueman`, `upower`
-* `polkit-gnome` auth agent (autostart in Sway session)
-* `xdg-desktop-portal-gtk` plus `xdg-desktop-portal-wlr` (Sway/Niri) or
-  `xdg-desktop-portal-hyprland` (Hyprland)
-* Thunar helpers: `gvfs`, `tumbler`, `thunar-volman`, `thunar-archive-plugin`
-* Noto Sans + emoji fonts, `gnome-keyring`, `imv`, `gnome-calculator`
-* Default MIME apps via `dotfiles/xdg/mimeapps.list` (Brave, Okular, Thunar, VLC, imv)
-* Laptop lid → suspend via `/etc/systemd/logind.conf.d/10-myeow-laptop.conf`
-* **CUPS** printing (`cups`, filters, `system-config-printer`, Avahi discovery)
-* When `shell=none`: **waybar** status bar (plus mako / nm-applet / blueman-applet)
-
-### Laptop controls
-
-| Action | How |
-| --- | --- |
-| Brightness | Fn keys / `brightnessctl set 5%+` |
-| Output volume | Fn volume / `wpctl set-volume @DEFAULT_AUDIO_SINK@ …` |
-| Output mute | Fn mute / `wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle` |
-| Mic mute | Fn mic mute / `wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle` |
-| Pick speakers / mic / BT audio | Super+A → pavucontrol |
-| Power profile | Super+Shift+P or `powerprofilesctl set power-saver\|balanced\|performance` |
-| Suspend / reboot / power off | Super+X Rofi powermenu |
-| Lock / idle blank | Super+L; swayidle after 5m lock / 10m DPMS |
-| Lid close | suspend (logind drop-in) |
-| Battery status | waybar / desktop shell UI, or `upower -i $(upower -e \| grep BAT)` |
-| Printers | `system-config-printer` or http://localhost:631 |
-
-Power management uses **power-profiles-daemon** only (not TLP or auto-cpufreq).
-
-### SwayFX rice
-
-Choosing Sway installs **SwayFX** (not stock Sway) with an end-4–inspired
-look: rounded corners, blur, shadows, dim inactive windows, snappy
-animations, and Windows-like tiling keybinds. Visual reference only —
-end-4 Quickshell is not ported. Config lives under `dotfiles/sway/`
-(`config` + `config.d/`). Idle lock via `swayidle`: lock after 5 minutes,
-DPMS off after 10 minutes, and lock before sleep. Screenshots use
-`grim`/`slurp` (Super+Shift+s region, Print full screen).
-
-Pass `--skip-desktop` for today’s terminal-only install (no compositor,
-shell, Rofi, or SDDM).
-
-## Dev tools
-
-Base package install includes:
-
-* **GitHub CLI** — `gh` (Fedora) / `github-cli` (Arch). After install: `gh auth login`
-* **CLI search / session** — `ripgrep` (`rg`), `fd`, `fzf`, `jq`, `tmux`
-* **Build helpers** — `gcc`, `make`, `pkgconf`, plus Ruby compile deps
-  (OpenSSL, readline, zlib, libyaml, libffi, gdbm, ncurses, sqlite headers)
-
-### Ruby (rbenv)
-
-Installs build dependencies and `ruby-build`, then:
+After install:
 
 ```bash
-rbenv install 4.0.2
-rbenv global 4.0.2
+gh auth login
+ruby -v          # expect 4.0.2 via rbenv
 ```
-
-Idempotent: skips compile if `4.0.2` is already present. Requires network the
-first time. `.zshrc` already runs `eval "$(rbenv init -)"`.
-
-## Hardware, codecs, gaming, and apps
-
-These steps always run after the desktop path (unless `--skip-packages`):
-
-### AMD GPU
-
-If `lspci` shows an AMD/Radeon display device (including Radeon 890M on
-Ryzen AI 9 HX 370), the installer installs Mesa, Vulkan, VA-API/VDPAU
-helpers, and firmware. GRUB already sets `amdgpu.gttsize=8192`. ROCm is
-not installed.
-
-### Video codecs
-
-* Fedora: enable RPM Fusion free + nonfree, then ffmpeg and GStreamer
-  plugins (swap to full `ffmpeg` when available).
-* Arch: `ffmpeg`, `gst-plugins-*`, `gst-libav`, `libva`.
-
-### Performance
-
-* `zram-generator` with `zram-size = ram / 2` and `zstd`
-* Enable `power-profiles-daemon` (not TLP / auto-cpufreq)
-
-### Printing (CUPS)
-
-Installs CUPS, cups-filters, cups-browsed, `system-config-printer`, and Avahi
-for discovery; enables `cups` and `avahi-daemon`. Add printers via
-`system-config-printer` or the CUPS web UI at http://localhost:631.
-
-### Gaming (native packages)
-
-* `gamemode`, `gamescope`, and **Steam** from the distro / RPM Fusion
-* Launch pattern: `gamemoderun gamescope -- steam`
-* Steam is not installed as a Flatpak so wrappers work
-
-### cloudflared (Cloudflare tunnels)
-
-Installs the Cloudflare tunnel client for exposing local services through
-Cloudflare (for example Jellyfin, or any other HTTP/TCP service):
-
-* Fedora: Cloudflare RPM repo (`pkg.cloudflare.com`), with GitHub binary fallback
-* Arch: pacman if available, otherwise GitHub binary
-
-The installer does **not** create or login a tunnel. After install:
-
-```bash
-cloudflared tunnel login
-cloudflared tunnel run <your-tunnel-name>
-# or: sudo systemctl enable --now cloudflared
-```
-
-### Flatpak apps
-
-Installs `flatpak`, adds Flathub, then installs:
-
-Brave, VS Code, LibreOffice, VLC, Jellyfin Server, DBeaver, Discord,
-Obsidian, qBittorrent, Spotify, Telegram, Zoom, GIMP, OBS,
-KDE Connect, PeaZip, Sublime Text, **Proton Pass**, **Proton VPN**.
-
-**Podman** is a native package. **Cursor IDE** uses the official install
-script when it is not already present (not reliably on Flathub).
-
-Pass `--skip-apps` to skip only the Flathub / Cursor app pass.
 
 ## Quick start
 
-Preview actions without changing the system:
+Preview without changing the system (~30 seconds):
 
 ```bash
 ./install.sh --dry-run
 ```
 
-Non-interactive desktop preview:
+Desktop dry-run with flags:
 
 ```bash
 ./install.sh --dry-run --compositor sway --shell none
 ./install.sh --dry-run --compositor sway --shell noctalia --launcher noctalia
 ```
 
-Link configs only, and skip packages, bun, rustup, and fastfetch:
+Configs only (no packages / toolchains):
 
 ```bash
 ./install.sh --skip-packages
 ```
 
-Terminal-only (no Wayland rice):
+Terminal-only (no Wayland rice / Flatpak apps):
 
 ```bash
-./install.sh --skip-desktop
-./install.sh --skip-apps
+./install.sh --skip-desktop --skip-apps
 ```
+
+## Desktop
+
+Interactive menus (skipped when the matching flag is set):
+
+1. Compositor — `1` SwayFX (default), `2` Niri, `3` Hyprland
+2. Desktop shell — `1` Noctalia, `2` Material, `3` Celestial, `4` None
+3. App launcher (Noctalia shell only) — `1` Rofi, `2` Noctalia built-in
+
+Confirm compositor, shell, launcher, and SDDM (default yes).
+**Super** is the Windows key (`Mod4`). **Super+w** opens Brave
+(`flatpak run com.brave.Browser`).
+
+| Choice | Upstream |
+| --- | --- |
+| `noctalia` | [noctalia-dev/noctalia-shell](https://github.com/noctalia-dev/noctalia-shell) |
+| `material` | [AvengeMedia/DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) |
+| `celestial` | [caelestia-dots/shell](https://github.com/caelestia-dots/shell) |
+| `none` | Compositor only: mako, nm-applet, blueman-applet, **waybar** |
+
+### Desktop plumbing
+
+When the desktop path runs (unless `--skip-packages`):
+
+* PipeWire + WirePlumber, `pavucontrol`, `blueman`, `upower`
+* `polkit-gnome` (Sway session autostart)
+* `xdg-desktop-portal-gtk` plus `xdg-desktop-portal-wlr` (Sway/Niri) or
+  `xdg-desktop-portal-hyprland` (Hyprland)
+* Thunar helpers: `gvfs`, `tumbler`, `thunar-volman`, `thunar-archive-plugin`
+* Noto Sans + emoji, `gnome-keyring`, `imv`, `gnome-calculator`
+* MIME defaults via `dotfiles/xdg/mimeapps.list`
+* Lid → suspend: `/etc/systemd/logind.conf.d/10-myeow-laptop.conf`
+* CUPS + Avahi; `shell=none` also gets **waybar**
+
+### Laptop controls
+
+| Action | How |
+| --- | --- |
+| Brightness | Fn keys / `brightnessctl set 5%+` |
+| Output volume / mute | Fn keys / `wpctl` on `@DEFAULT_AUDIO_SINK@` |
+| Mic mute | Fn mic mute / `wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle` |
+| Speakers / mic / BT audio | Super+A → pavucontrol |
+| Power profile | Super+Shift+P or `powerprofilesctl set …` |
+| Suspend / reboot / power off | Super+X Rofi powermenu |
+| Lock / idle | Super+L; swayidle 5m lock / 10m DPMS |
+| Lid close | suspend (logind drop-in) |
+| Battery | waybar / shell UI, or `upower` |
+| Printers | `system-config-printer` or http://localhost:631 |
+
+Power management uses **power-profiles-daemon** only (not TLP or auto-cpufreq).
+
+Noctalia can show power profiles in its bar. Charge-limit UI needs a community
+plugin **and** sysfs `charge_control_end_threshold` on your laptop.
+
+### SwayFX rice
+
+Sway installs **SwayFX** (not stock Sway): end-4–inspired look (corners, blur,
+shadows, dim inactive), Windows-like tiling. Visual reference only — end-4
+Quickshell is not ported. Config: `dotfiles/sway/` (`config` + `config.d/`).
+
+Screenshots: Super+Shift+s (region), Print (full) via `grim` / `slurp`.
+
+Pass `--skip-desktop` for a terminal-only install.
+
+## Dev tools
+
+| Tool | Notes |
+| --- | --- |
+| GitHub CLI | `gh` (Fedora) / `github-cli` (Arch) → `gh auth login` |
+| Search / session | `rg`, `fd`, `fzf`, `jq`, `tmux` |
+| Build helpers | `gcc`, `make`, `pkgconf`, Ruby compile deps |
+
+### Ruby (rbenv)
+
+Installer runs build deps + `ruby-build`, then:
+
+```bash
+rbenv install 4.0.2
+rbenv global 4.0.2
+```
+
+Skips compile if `4.0.2` is already installed. First run needs network and can
+take several minutes. `.zshrc` already has `eval "$(rbenv init -)"`.
+
+## Hardware, codecs, gaming, and apps
+
+These always run after the desktop path (unless `--skip-packages`):
+
+### AMD GPU
+
+If `lspci` shows AMD/Radeon display (including Radeon 890M), installs Mesa,
+Vulkan, VA-API/VDPAU helpers, and firmware. GRUB sets `amdgpu.gttsize=8192`.
+ROCm is not installed.
+
+### Video codecs
+
+* Fedora: RPM Fusion free + nonfree, then ffmpeg + GStreamer plugins
+* Arch: `ffmpeg`, `gst-plugins-*`, `gst-libav`, `libva`
+
+### Performance
+
+* `zram-generator`: `zram-size = ram / 2`, `zstd`
+* `power-profiles-daemon` enabled
+
+### Printing (CUPS)
+
+CUPS, filters, cups-browsed, `system-config-printer`, Avahi; enables `cups` and
+`avahi-daemon`.
+
+### Gaming
+
+Native `gamemode`, `gamescope`, **Steam** (not Flatpak). Launch:
+
+```bash
+gamemoderun gamescope -- steam
+```
+
+### cloudflared
+
+Cloudflare tunnel client (Fedora RPM repo or GitHub binary; Arch pacman or
+binary). Does **not** create or login a tunnel:
+
+```bash
+cloudflared tunnel login
+cloudflared tunnel run <your-tunnel-name>
+```
+
+### Flatpak apps
+
+Flathub apps: Brave, VS Code, LibreOffice, VLC, Jellyfin Server, DBeaver,
+Discord, Obsidian, qBittorrent, Spotify, Telegram, Zoom, GIMP, OBS,
+KDE Connect, PeaZip, Sublime Text, Proton Pass, Proton VPN.
+
+**Podman** is native. **Cursor** uses the official install script when missing.
+
+`--skip-apps` skips only Flatpak / Cursor.
 
 ## Configuration
 
-`install.sh` accepts these options:
-
 | Option | Description |
 | --- | --- |
-| `-h`, `--help` | Show this help |
-| `--skip-packages` | Do not install system packages or toolchains |
-| `--skip-fonts` | Do not install JetBrainsMono Nerd Font |
-| `--skip-grub` | Do not install the GRUB theme |
-| `--skip-desktop` | Terminal-only install (no compositor / shell / SDDM) |
-| `--compositor sway\|niri\|hyprland` | Skip the compositor menu (`sway` → SwayFX) |
-| `--shell noctalia\|material\|celestial\|none` | Skip the shell menu |
-| `--launcher rofi\|noctalia` | App launcher; `noctalia` only with `--shell noctalia` (Super+Space) |
-| `--no-sddm` | Install desktop pieces but do not enable SDDM |
-| `--skip-apps` | Skip Flathub apps and the Cursor install script |
-| `--dry-run` | Print actions without changing the system |
+| `-h`, `--help` | Show help |
+| `--skip-packages` | Skip system packages and toolchains |
+| `--skip-fonts` | Skip JetBrainsMono Nerd Font |
+| `--skip-grub` | Skip GRUB theme |
+| `--skip-desktop` | No compositor / shell / SDDM |
+| `--compositor sway\|niri\|hyprland` | Skip compositor menu (`sway` → SwayFX) |
+| `--shell noctalia\|material\|celestial\|none` | Skip shell menu |
+| `--launcher rofi\|noctalia` | Launcher; `noctalia` only with Noctalia shell |
+| `--no-sddm` | Desktop pieces without enabling SDDM |
+| `--skip-apps` | Skip Flathub apps and Cursor script |
+| `--dry-run` | Print actions only |
 
-Linked paths:
+### Linked paths
 
 | Repository path | Destination |
 | --- | --- |
@@ -310,33 +316,23 @@ Linked paths:
 | `dotfiles/cursor/skills/` | `~/.cursor/skills` |
 | `dotfiles/cursor/agents/skills/` | `~/.cursor/agents/skills` |
 | `dotfiles/oh-my-posh/themes/catppuccin.omp.json` | `~/.oh-my-posh/themes/catppuccin.omp.json` |
-| `dotfiles/grub/catppuccin-mocha-grub-theme/` | `/usr/share/grub/themes/catppuccin-mocha-grub-theme/` |
-| `dotfiles/sway/config` + `config.d/` | `~/.config/sway/` (SwayFX rice) |
+| `dotfiles/grub/catppuccin-mocha-grub-theme/` | `/usr/share/grub/themes/…/` |
+| `dotfiles/sway/config` + `config.d/` | `~/.config/sway/` |
 | `wallpapers/lofi-japanese-…jpg` | `~/.config/sway/wallpaper.jpg` |
 | `dotfiles/niri/config.kdl` | `~/.config/niri/config.kdl` |
 | `dotfiles/hypr/hyprland.conf` | `~/.config/hypr/hyprland.conf` |
 | `dotfiles/rofi/` | `~/.config/rofi` |
-| `dotfiles/sddm/catppuccin-mocha/` | `/usr/share/sddm/themes/catppuccin-mocha/` (copied) |
-| `dotfiles/sddm/sddm.conf.d/10-catppuccin.conf` | `/etc/sddm.conf.d/10-catppuccin.conf` (copied) |
+| `dotfiles/sddm/catppuccin-mocha/` | `/usr/share/sddm/themes/…/` (copied) |
+| `dotfiles/sddm/sddm.conf.d/10-catppuccin.conf` | `/etc/sddm.conf.d/…` (copied) |
 | `dotfiles/xdg/mimeapps.list` | `~/.config/mimeapps.list` |
 | `scripts/cycle-power-profile.sh` | `~/.local/bin/cycle-power-profile.sh` |
-| `dotfiles/waybar/` (shell=none) | `~/.config/waybar/` |
+| `dotfiles/waybar/` (`shell=none`) | `~/.config/waybar/` |
 
-Kitty uses Catppuccin Frappé, JetBrainsMono Nerd Font at size 9, hidden
-decorations, padding, and 0.85 background opacity. The prompt uses
-Oh My Posh with Catppuccin (`ZSH_THEME=""`). GRUB uses
-Catppuccin Mocha at `1920x1200,1920x1080,auto`.
+Kitty: Catppuccin Frappé, JetBrainsMono Nerd Font size 9, opacity 0.85.
+Prompt: Oh My Posh Catppuccin (`ZSH_THEME=""`). GRUB: Catppuccin Mocha at
+`1920x1200,1920x1080,auto`. Use that Nerd Font in Kitty and Cursor’s terminal.
 
-Use a Nerd Font in every terminal that shows the prompt (Kitty and
-Cursor’s integrated terminal both need `JetBrainsMono Nerd Font`).
-
-## Soon
-
-* More Oh My Posh theme variants under `dotfiles/oh-my-posh/themes/`
-* Optional Cursor `settings.json` snippet for the Nerd Font terminal
-* Trim unused Cursor skills from the install set
-
-## Layout
+### Layout
 
 ```text
 .
@@ -348,43 +344,49 @@ Cursor’s integrated terminal both need `JetBrainsMono Nerd Font`).
 │   └── kitty_fastfetch_screenshot.png
 ├── wallpapers/
 └── dotfiles/
-    ├── kitty/
-    ├── oh-my-zsh/
-    ├── oh-my-posh/
-    ├── grub/
-    ├── sway/
-    │   └── config.d/
-    ├── niri/
-    ├── hypr/
-    ├── rofi/
-    ├── waybar/
-    ├── sddm/
-    ├── xdg/
-    └── cursor/
-        ├── skills/
-        └── agents/skills/
+    ├── kitty/  oh-my-zsh/  oh-my-posh/  grub/
+    ├── sway/config.d/  niri/  hypr/  rofi/  waybar/
+    ├── sddm/  xdg/
+    └── cursor/skills/  cursor/agents/skills/
 ```
 
 ## Screenshots
 
 ![Kitty on Fedora COSMIC showing fastfetch, a Catppuccin Frappé palette, and a zsh prompt](./assets/kitty_fastfetch_screenshot.png)
 
+<!-- VISUAL SUGGESTION [SCREENSHOT]:
+Add a SwayFX desktop screenshot after the Kitty shot.
+Show tiled windows, Catppuccin borders, and (if shell=none) waybar.
+Purpose: Show the Wayland rice landing state after ./install.sh.
+-->
+
 ## Documentation
 
 | Guide | Description |
 | --- | --- |
-| [install.sh](./install.sh) | Installer source and `--help` text |
+| [install.sh](./install.sh) | Installer source and `--help` |
 | [kitty.conf](./dotfiles/kitty/kitty.conf) | Kitty appearance |
-| [.zshrc](./dotfiles/oh-my-zsh/.zshrc) | Oh My Zsh, Oh My Posh, PATH, and fastfetch |
+| [.zshrc](./dotfiles/oh-my-zsh/.zshrc) | Oh My Zsh, Oh My Posh, PATH |
 | [Oh My Posh theme](./dotfiles/oh-my-posh/themes/catppuccin.omp.json) | Catppuccin prompt |
-| [GRUB default](./dotfiles/grub/default) | Theme and gfxmode used on this machine |
-| [SwayFX config](./dotfiles/sway/config) | Modular SwayFX rice (end-4 visual reference) |
-| [Rofi](./dotfiles/rofi/) | New Wave Rofi launchers and applets |
+| [GRUB default](./dotfiles/grub/default) | Theme and gfxmode |
+| [SwayFX config](./dotfiles/sway/config) | Modular SwayFX rice |
+| [Rofi](./dotfiles/rofi/) | New Wave launchers and applets |
+
+## Roadmap
+
+* More Oh My Posh theme variants under `dotfiles/oh-my-posh/themes/`
+* Optional Cursor `settings.json` snippet for the Nerd Font terminal
+* Trim unused Cursor skills from the install set
+
+## Contributing
+
+This is a personal config. Useful changes still welcome:
+
+1. Fork the repository
+2. Create a feature branch
+3. Open a pull request against [kmfd14/myeow-linux-config](https://github.com/kmfd14/myeow-linux-config)
 
 ## Credits
-
-Themes, plugins, and installers in this config come from these
-projects:
 
 | Project | Repository |
 | --- | --- |
@@ -408,9 +410,8 @@ projects:
 | Oh My Posh | [JanDeDobbeleer/oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) |
 | rustup | [rust-lang/rustup](https://github.com/rust-lang/rustup) |
 
-Cursor skills in `dotfiles/cursor/` are bundled from their own
-upstreams where those are recorded, including
-[JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) and
+Cursor skills in `dotfiles/cursor/` keep their own upstreams where recorded,
+including [JuliusBrussee/caveman](https://github.com/JuliusBrussee/caveman) and
 [robzolkos/skill-rails-upgrade](https://github.com/robzolkos/skill-rails-upgrade).
 
 ## License

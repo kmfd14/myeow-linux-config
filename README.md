@@ -119,7 +119,7 @@ Shell names map to upstream projects (not zsh):
 | `noctalia` | [noctalia-dev/noctalia-shell](https://github.com/noctalia-dev/noctalia-shell) |
 | `material` | [AvengeMedia/DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) |
 | `celestial` | [caelestia-dots/shell](https://github.com/caelestia-dots/shell) |
-| `none` | Compositor only — installs mako, nm-applet, and blueman-applet for notifications / Wi‑Fi / BT |
+| `none` | Compositor only — mako, nm-applet, blueman-applet, and **waybar** |
 
 ### Desktop plumbing
 
@@ -133,6 +133,8 @@ When the desktop path runs, the installer also installs:
 * Noto Sans + emoji fonts, `gnome-keyring`, `imv`, `gnome-calculator`
 * Default MIME apps via `dotfiles/xdg/mimeapps.list` (Brave, Okular, Thunar, VLC, imv)
 * Laptop lid → suspend via `/etc/systemd/logind.conf.d/10-myeow-laptop.conf`
+* **CUPS** printing (`cups`, filters, `system-config-printer`, Avahi discovery)
+* When `shell=none`: **waybar** status bar (plus mako / nm-applet / blueman-applet)
 
 ### Laptop controls
 
@@ -147,9 +149,10 @@ When the desktop path runs, the installer also installs:
 | Suspend / reboot / power off | Super+X Rofi powermenu |
 | Lock / idle blank | Super+L; swayidle after 5m lock / 10m DPMS |
 | Lid close | suspend (logind drop-in) |
-| Battery status | desktop shell UI, or `upower -i $(upower -e \| grep BAT)` |
+| Battery status | waybar / desktop shell UI, or `upower -i $(upower -e \| grep BAT)` |
+| Printers | `system-config-printer` or http://localhost:631 |
 
-Power management uses **power-profiles-daemon** only (not TLP).
+Power management uses **power-profiles-daemon** only (not TLP or auto-cpufreq).
 
 ### SwayFX rice
 
@@ -184,7 +187,13 @@ not installed.
 ### Performance
 
 * `zram-generator` with `zram-size = ram / 2` and `zstd`
-* Enable `power-profiles-daemon`
+* Enable `power-profiles-daemon` (not TLP / auto-cpufreq)
+
+### Printing (CUPS)
+
+Installs CUPS, cups-filters, cups-browsed, `system-config-printer`, and Avahi
+for discovery; enables `cups` and `avahi-daemon`. Add printers via
+`system-config-printer` or the CUPS web UI at http://localhost:631.
 
 ### Gaming (native packages)
 
@@ -214,7 +223,7 @@ Installs `flatpak`, adds Flathub, then installs:
 
 Brave, VS Code, LibreOffice, VLC, Jellyfin Server, DBeaver, Discord,
 Obsidian, qBittorrent, Spotify, Telegram, Zoom, GIMP, OBS,
-KDE Connect, PeaZip, Sublime Text.
+KDE Connect, PeaZip, Sublime Text, **Proton Pass**, **Proton VPN**.
 
 **Podman** is a native package. **Cursor IDE** uses the official install
 script when it is not already present (not reliably on Flathub).
@@ -287,6 +296,7 @@ Linked paths:
 | `dotfiles/sddm/sddm.conf.d/10-catppuccin.conf` | `/etc/sddm.conf.d/10-catppuccin.conf` (copied) |
 | `dotfiles/xdg/mimeapps.list` | `~/.config/mimeapps.list` |
 | `scripts/cycle-power-profile.sh` | `~/.local/bin/cycle-power-profile.sh` |
+| `dotfiles/waybar/` (shell=none) | `~/.config/waybar/` |
 
 Kitty uses Catppuccin Frappé, JetBrainsMono Nerd Font at size 9, hidden
 decorations, padding, and 0.85 background opacity. The prompt uses
@@ -323,6 +333,7 @@ Cursor’s integrated terminal both need `JetBrainsMono Nerd Font`).
     ├── niri/
     ├── hypr/
     ├── rofi/
+    ├── waybar/
     ├── sddm/
     ├── xdg/
     └── cursor/

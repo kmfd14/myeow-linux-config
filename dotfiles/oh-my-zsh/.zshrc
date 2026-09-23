@@ -112,19 +112,16 @@ source $ZSH/oh-my-zsh.sh
 # alias ohmyzsh="mate ~/.oh-my-zsh"
 eval "$(rbenv init -)"
 
-# bun completions
-[ -s "/home/kmfdecena/.bun/_bun" ] && source "/home/kmfdecena/.bun/_bun"
-
 # bun
 export BUN_INSTALL="$HOME/.bun"
 export PATH="$BUN_INSTALL/bin:$PATH"
+[ -s "$BUN_INSTALL/_bun" ] && source "$BUN_INSTALL/_bun"
 
 # rust
 [ -s "$HOME/.cargo/env" ] && source "$HOME/.cargo/env"
 
-# Added by LM Studio CLI (lms)
-export PATH="$PATH:/home/kmfdecena/.lmstudio/bin"
-# End of LM Studio CLI section
+# LM Studio CLI (optional; only if installed)
+[ -d "$HOME/.lmstudio/bin" ] && export PATH="$PATH:$HOME/.lmstudio/bin"
 
 export PATH="$HOME/.local/bin:$PATH"
 

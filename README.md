@@ -110,6 +110,7 @@ menus (skipped when the matching flag is set):
 
 It then confirms compositor, shell, launcher, and whether to enable SDDM
 (default yes). **Super** is the Windows key (`Mod4`).
+**Super+w** opens Brave (Flatpak `com.brave.Browser`).
 
 Shell names map to upstream projects (not zsh):
 
@@ -118,7 +119,37 @@ Shell names map to upstream projects (not zsh):
 | `noctalia` | [noctalia-dev/noctalia-shell](https://github.com/noctalia-dev/noctalia-shell) |
 | `material` | [AvengeMedia/DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) |
 | `celestial` | [caelestia-dots/shell](https://github.com/caelestia-dots/shell) |
-| `none` | Compositor only (SwayFX rice without a desktop shell) |
+| `none` | Compositor only — installs mako, nm-applet, and blueman-applet for notifications / Wi‑Fi / BT |
+
+### Desktop plumbing
+
+When the desktop path runs, the installer also installs:
+
+* PipeWire + WirePlumber, `pavucontrol`, `blueman`, `upower`
+* `polkit-gnome` auth agent (autostart in Sway session)
+* `xdg-desktop-portal-gtk` plus `xdg-desktop-portal-wlr` (Sway/Niri) or
+  `xdg-desktop-portal-hyprland` (Hyprland)
+* Thunar helpers: `gvfs`, `tumbler`, `thunar-volman`, `thunar-archive-plugin`
+* Noto Sans + emoji fonts, `gnome-keyring`, `imv`, `gnome-calculator`
+* Default MIME apps via `dotfiles/xdg/mimeapps.list` (Brave, Okular, Thunar, VLC, imv)
+* Laptop lid → suspend via `/etc/systemd/logind.conf.d/10-myeow-laptop.conf`
+
+### Laptop controls
+
+| Action | How |
+| --- | --- |
+| Brightness | Fn keys / `brightnessctl set 5%+` |
+| Output volume | Fn volume / `wpctl set-volume @DEFAULT_AUDIO_SINK@ …` |
+| Output mute | Fn mute / `wpctl set-mute @DEFAULT_AUDIO_SINK@ toggle` |
+| Mic mute | Fn mic mute / `wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle` |
+| Pick speakers / mic / BT audio | Super+A → pavucontrol |
+| Power profile | Super+Shift+P or `powerprofilesctl set power-saver\|balanced\|performance` |
+| Suspend / reboot / power off | Super+X Rofi powermenu |
+| Lock / idle blank | Super+L; swayidle after 5m lock / 10m DPMS |
+| Lid close | suspend (logind drop-in) |
+| Battery status | desktop shell UI, or `upower -i $(upower -e \| grep BAT)` |
+
+Power management uses **power-profiles-daemon** only (not TLP).
 
 ### SwayFX rice
 
@@ -126,7 +157,9 @@ Choosing Sway installs **SwayFX** (not stock Sway) with an end-4–inspired
 look: rounded corners, blur, shadows, dim inactive windows, snappy
 animations, and Windows-like tiling keybinds. Visual reference only —
 end-4 Quickshell is not ported. Config lives under `dotfiles/sway/`
-(`config` + `config.d/`).
+(`config` + `config.d/`). Idle lock via `swayidle`: lock after 5 minutes,
+DPMS off after 10 minutes, and lock before sleep. Screenshots use
+`grim`/`slurp` (Super+Shift+s region, Print full screen).
 
 Pass `--skip-desktop` for today’s terminal-only install (no compositor,
 shell, Rofi, or SDDM).
@@ -180,7 +213,7 @@ cloudflared tunnel run <your-tunnel-name>
 Installs `flatpak`, adds Flathub, then installs:
 
 Brave, VS Code, LibreOffice, VLC, Jellyfin Server, DBeaver, Discord,
-Obsidian, qBittorrent, Spotify, Telegram, Zoom, GIMP, Flameshot, OBS,
+Obsidian, qBittorrent, Spotify, Telegram, Zoom, GIMP, OBS,
 KDE Connect, PeaZip, Sublime Text.
 
 **Podman** is a native package. **Cursor IDE** uses the official install
@@ -252,6 +285,8 @@ Linked paths:
 | `dotfiles/rofi/` | `~/.config/rofi` |
 | `dotfiles/sddm/catppuccin-mocha/` | `/usr/share/sddm/themes/catppuccin-mocha/` (copied) |
 | `dotfiles/sddm/sddm.conf.d/10-catppuccin.conf` | `/etc/sddm.conf.d/10-catppuccin.conf` (copied) |
+| `dotfiles/xdg/mimeapps.list` | `~/.config/mimeapps.list` |
+| `scripts/cycle-power-profile.sh` | `~/.local/bin/cycle-power-profile.sh` |
 
 Kitty uses Catppuccin Frappé, JetBrainsMono Nerd Font at size 9, hidden
 decorations, padding, and 0.85 background opacity. The prompt uses
@@ -272,6 +307,8 @@ Cursor’s integrated terminal both need `JetBrainsMono Nerd Font`).
 ```text
 .
 ├── install.sh
+├── scripts/
+│   └── cycle-power-profile.sh
 ├── assets/
 │   ├── banner.svg
 │   └── kitty_fastfetch_screenshot.png
@@ -287,6 +324,7 @@ Cursor’s integrated terminal both need `JetBrainsMono Nerd Font`).
     ├── hypr/
     ├── rofi/
     ├── sddm/
+    ├── xdg/
     └── cursor/
         ├── skills/
         └── agents/skills/

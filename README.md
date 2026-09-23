@@ -54,6 +54,11 @@ This repository uses the following technologies:
   built-in); **Super+Space** opens the chosen launcher.
 * Links New Wave Rofi (when selected), installs Catppuccin Mocha SDDM, and
   writes shell/menu snippets for the chosen compositor.
+* Detects AMD GPUs (e.g. Radeon 890M) and installs Mesa / Vulkan / VA-API.
+* Enables RPM Fusion (Fedora) and installs ffmpeg + GStreamer codecs.
+* Configures zram (half of RAM, zstd) and enables power-profiles-daemon.
+* Installs gamemode, gamescope, native Steam, and podman.
+* Adds Flathub and installs a set of desktop Flatpaks; Cursor via official script.
 * Installs Oh My Zsh plus autosuggestions, syntax highlighting, and
   completions.
 * Skips work that is already done; safe to run again.
@@ -68,6 +73,7 @@ flowchart TD
   arch --> menu
   menu --> tools["bun, rustup, fastfetch, oh-my-posh"]
   tools --> links["Link dotfiles + desktop"]
+  links --> extras["AMD, codecs, zram, gaming, Flatpak"]
 ```
 
 ## Install
@@ -125,6 +131,47 @@ end-4 Quickshell is not ported. Config lives under `dotfiles/sway/`
 Pass `--skip-desktop` for today’s terminal-only install (no compositor,
 shell, Rofi, or SDDM).
 
+## Hardware, codecs, gaming, and apps
+
+These steps always run after the desktop path (unless `--skip-packages`):
+
+### AMD GPU
+
+If `lspci` shows an AMD/Radeon display device (including Radeon 890M on
+Ryzen AI 9 HX 370), the installer installs Mesa, Vulkan, VA-API/VDPAU
+helpers, and firmware. GRUB already sets `amdgpu.gttsize=8192`. ROCm is
+not installed.
+
+### Video codecs
+
+* Fedora: enable RPM Fusion free + nonfree, then ffmpeg and GStreamer
+  plugins (swap to full `ffmpeg` when available).
+* Arch: `ffmpeg`, `gst-plugins-*`, `gst-libav`, `libva`.
+
+### Performance
+
+* `zram-generator` with `zram-size = ram / 2` and `zstd`
+* Enable `power-profiles-daemon`
+
+### Gaming (native packages)
+
+* `gamemode`, `gamescope`, and **Steam** from the distro / RPM Fusion
+* Launch pattern: `gamemoderun gamescope -- steam`
+* Steam is not installed as a Flatpak so wrappers work
+
+### Flatpak apps
+
+Installs `flatpak`, adds Flathub, then installs:
+
+Brave, VS Code, LibreOffice, VLC, Jellyfin Server, DBeaver, Discord,
+Obsidian, qBittorrent, Spotify, Telegram, Zoom, GIMP, Flameshot, OBS,
+KDE Connect, PeaZip, Sublime Text.
+
+**Podman** is a native package. **Cursor IDE** uses the official install
+script when it is not already present (not reliably on Flathub).
+
+Pass `--skip-apps` to skip only the Flathub / Cursor app pass.
+
 ## Quick start
 
 Preview actions without changing the system:
@@ -150,6 +197,7 @@ Terminal-only (no Wayland rice):
 
 ```bash
 ./install.sh --skip-desktop
+./install.sh --skip-apps
 ```
 
 ## Configuration
@@ -167,6 +215,7 @@ Terminal-only (no Wayland rice):
 | `--shell noctalia\|material\|celestial\|none` | Skip the shell menu |
 | `--launcher rofi\|noctalia` | App launcher; `noctalia` only with `--shell noctalia` (Super+Space) |
 | `--no-sddm` | Install desktop pieces but do not enable SDDM |
+| `--skip-apps` | Skip Flathub apps and the Cursor install script |
 | `--dry-run` | Print actions without changing the system |
 
 Linked paths:

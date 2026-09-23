@@ -13,6 +13,7 @@ SKIP_PACKAGES=0
 SKIP_FONTS=0
 SKIP_GRUB=0
 SKIP_DESKTOP=0
+SKIP_APPS=0
 DRY_RUN=0
 OS_FAMILY=""
 OS_PRETTY=""
@@ -28,6 +29,30 @@ ENABLE_SDDM=1
 WALLPAPER_SRC="$REPO_ROOT/wallpapers/lofi-japanese-3840x2160-14884.jpg"
 ROFI_MENU_CMD='bash $HOME/.config/rofi/launchers/type-7/launcher.sh'
 NOCTALIA_MENU_CMD='noctalia msg panel-toggle launcher'
+
+# Flathub apps (Steam + Podman are native — see install_gaming / install_podman)
+FLATHUB_APPS=(
+  com.brave.Browser
+  com.visualstudio.code
+  org.libreoffice.LibreOffice
+  org.videolan.VLC
+  org.jellyfin.JellyfinServer
+  io.dbeaver.DBeaverCommunity
+  com.discordapp.Discord
+  md.obsidian.Obsidian
+  org.qbittorrent.qBittorrent
+  com.spotify.Client
+  org.telegram.desktop
+  us.zoom.Zoom
+  org.gimp.GIMP
+  org.flameshot.Flameshot
+  com.obsproject.Studio
+  org.kde.kdeconnect
+  io.github.peazip.PeaZip
+  com.sublimehq.SublimeText
+)
+# Cursor is not reliably on Flathub; installed via official script when missing
+CURSOR_INSTALL_URL="https://cursor.com/install"
 
 STEP_CURRENT=0
 STEP_TOTAL=0
@@ -64,7 +89,8 @@ plugins, and Catppuccin Mocha GRUB theme those configs expect.
 
 Optionally installs a Wayland compositor (SwayFX, Niri, Hyprland), an optional
 desktop shell (Noctalia, DankMaterial, Caelestia), New Wave Rofi or Noctalia
-launcher, and Catppuccin Mocha SDDM.
+launcher, Catppuccin Mocha SDDM, AMD GPU stack, video codecs, zram tweaks,
+gamemode/gamescope/Steam, podman, and Flathub apps.
 
 Supported systems: Fedora, Arch Linux.
 
@@ -80,6 +106,7 @@ Options:
                              Skip shell menu
   --launcher rofi|noctalia   App launcher (noctalia only when shell=noctalia)
   --no-sddm                  Install desktop pieces but do not enable SDDM
+  --skip-apps                Skip Flathub / Cursor app installs
   --dry-run                  Print actions without changing the system
 EOF
 }
@@ -1165,6 +1192,189 @@ install_desktop_shell() {
   esac
 }
 
+# --- Hardware / codecs / perf / gaming / Flatpak ------------------------------
+
+has_amd_gpu() {
+  need_cmd lspci || return 1
+  lspci 2>/dev/null | grep -qiE '(VGA|Display|3D).*(AMD|Radeon|ATI)|(AMD|Radeon|ATI).*(VGA|Display|3D)'
+}
+
+install_amd_gpu() {
+  (( SKIP_PACKAGES )) && { warn "Skipping AMD GPU packages"; return 0; }
+
+  if ! has_amd_gpu; then
+    warn "No AMD GPU detected via lspci — skipping AMD Mesa/Vulkan stack"
+    return 0
+  fi
+
+  log "AMD GPU detected — installing Mesa / Vulkan / VA-API stack"
+  case "$OS_FAMILY" in
+    fedora)
+      try_pkg_install mesa-dri-drivers mesa-vulkan-drivers mesa-va-drivers \
+        mesa-vdpau-drivers libva-utils vulkan-tools linux-firmware || true
+      ;;
+    arch)
+      try_pkg_install mesa vulkan-radeon libva-mesa-driver mesa-vdpau \
+        libva-utils vulkan-tools linux-firmware || true
+      ;;
+  esac
+  ok "AMD graphics packages attempted (GRUB already uses amdgpu.gttsize=8192)"
+}
+
+enable_rpmfusion() {
+  (( DRY_RUN )) && { ok "Would enable RPM Fusion free + nonfree"; return 0; }
+  if [[ -f /etc/yum.repos.d/rpmfusion-free.repo ]]; then
+    ok "RPM Fusion already enabled"
+    return 0
+  fi
+  local ver
+  ver="$(rpm -E %fedora 2>/dev/null || true)"
+  [[ -n "$ver" ]] || { warn "Could not detect Fedora version for RPM Fusion"; return 1; }
+  sudo_if_needed dnf install -y \
+    "https://mirrors.rpmfusion.org/free/fedora/rpmfusion-free-release-${ver}.noarch.rpm" \
+    "https://mirrors.rpmfusion.org/nonfree/fedora/rpmfusion-nonfree-release-${ver}.noarch.rpm" \
+    || warn "RPM Fusion enable failed — codecs may be incomplete"
+}
+
+install_codecs() {
+  (( SKIP_PACKAGES )) && { warn "Skipping video codecs"; return 0; }
+
+  log "Installing video codecs / GStreamer"
+  case "$OS_FAMILY" in
+    fedora)
+      enable_rpmfusion || true
+      try_pkg_install ffmpeg gstreamer1-plugins-good gstreamer1-plugins-bad-free \
+        gstreamer1-plugins-ugly gstreamer1-plugin-libav || true
+      # Prefer full ffmpeg from RPM Fusion when available
+      if (( ! DRY_RUN )); then
+        sudo_if_needed dnf swap -y ffmpeg-free ffmpeg --allowerasing 2>/dev/null \
+          || sudo_if_needed dnf install -y ffmpeg --allowerasing 2>/dev/null \
+          || true
+      else
+        ok "Would swap/install ffmpeg from RPM Fusion when available"
+      fi
+      ;;
+    arch)
+      try_pkg_install ffmpeg gst-plugins-good gst-plugins-bad gst-plugins-ugly \
+        gst-libav libva || true
+      ;;
+  esac
+  ok "Codec packages attempted"
+}
+
+install_performance_tweaks() {
+  (( SKIP_PACKAGES )) && { warn "Skipping performance tweaks"; return 0; }
+
+  log "Installing zram-generator and power-profiles-daemon"
+  case "$OS_FAMILY" in
+    fedora) try_pkg_install zram-generator power-profiles-daemon || true ;;
+    arch)   try_pkg_install zram-generator power-profiles-daemon || true ;;
+  esac
+
+  local zram_conf="/etc/systemd/zram-generator.conf"
+  if (( DRY_RUN )); then
+    ok "Would write $zram_conf (zram-size = ram / 2, zstd)"
+  elif [[ -f "$zram_conf" ]]; then
+    ok "zram-generator.conf already present"
+  else
+    printf '%s\n' \
+      '[zram0]' \
+      'zram-size = ram / 2' \
+      'compression-algorithm = zstd' \
+      | sudo_if_needed tee "$zram_conf" >/dev/null
+    ok "Wrote $zram_conf"
+  fi
+
+  if (( DRY_RUN )); then
+    ok "Would enable --now systemd-zram-setup@zram0 power-profiles-daemon"
+  else
+    sudo_if_needed systemctl daemon-reload || true
+    sudo_if_needed systemctl enable --now systemd-zram-setup@zram0 2>/dev/null \
+      || warn "Could not enable zram unit yet (reboot may apply it)"
+    sudo_if_needed systemctl enable --now power-profiles-daemon 2>/dev/null \
+      || warn "Could not enable power-profiles-daemon"
+  fi
+  ok "Performance tweaks applied"
+}
+
+install_gaming() {
+  (( SKIP_PACKAGES )) && { warn "Skipping gaming packages"; return 0; }
+
+  log "Installing gamemode, gamescope, Steam (native)"
+  case "$OS_FAMILY" in
+    fedora)
+      enable_rpmfusion || true
+      try_pkg_install gamemode gamescope steam || true
+      ;;
+    arch)
+      try_pkg_install gamemode gamescope steam || true
+      ;;
+  esac
+  ok "Gaming packages attempted — launch with: gamemoderun gamescope -- steam"
+}
+
+install_podman() {
+  (( SKIP_PACKAGES )) && { warn "Skipping podman"; return 0; }
+  log "Installing podman"
+  try_pkg_install podman || true
+  ok "podman attempted"
+}
+
+install_flatpak_repo() {
+  (( SKIP_PACKAGES )) && { warn "Skipping flatpak"; return 0; }
+  try_pkg_install flatpak || true
+  if (( DRY_RUN )); then
+    ok "Would add Flathub remote"
+    return 0
+  fi
+  if flatpak remote-list 2>/dev/null | grep -q '^flathub'; then
+    ok "Flathub already configured"
+  else
+    run flatpak remote-add --if-not-exists flathub \
+      https://dl.flathub.org/repo/flathub.flatpakrepo \
+      || sudo_if_needed flatpak remote-add --if-not-exists flathub \
+        https://dl.flathub.org/repo/flathub.flatpakrepo \
+      || warn "Could not add Flathub remote"
+  fi
+}
+
+install_flatpak_apps() {
+  (( SKIP_APPS )) && { warn "Skipping Flatpak apps (--skip-apps)"; return 0; }
+  (( SKIP_PACKAGES )) && { warn "Skipping Flatpak apps"; return 0; }
+
+  install_flatpak_repo
+
+  log "Installing Flathub apps"
+  local app
+  for app in "${FLATHUB_APPS[@]}"; do
+    if (( DRY_RUN )); then
+      ok "Would: flatpak install -y flathub $app"
+      continue
+    fi
+    if flatpak install -y flathub "$app" 2>/dev/null \
+      || sudo_if_needed flatpak install -y flathub "$app" 2>/dev/null; then
+      ok "Flatpak $app"
+    else
+      warn "Flatpak $app unavailable or failed — skipped"
+    fi
+  done
+
+  # Cursor IDE: official installer when missing from PATH / Flathub
+  if need_cmd cursor || [[ -x "$HOME/.local/bin/cursor" ]] || [[ -d "/opt/Cursor" ]] \
+    || [[ -d "$HOME/.local/share/cursor" ]]; then
+    ok "Cursor IDE already present"
+  elif (( DRY_RUN )); then
+    ok "Would install Cursor IDE via $CURSOR_INSTALL_URL"
+  else
+    log "Installing Cursor IDE (not on Flathub)"
+    if curl -fsSL "$CURSOR_INSTALL_URL" | bash; then
+      ok "Cursor IDE install script finished"
+    else
+      warn "Cursor install failed — download from https://cursor.com"
+    fi
+  fi
+}
+
 # --- Args / main --------------------------------------------------------------
 
 parse_args() {
@@ -1175,6 +1385,7 @@ parse_args() {
       --skip-fonts) SKIP_FONTS=1 ;;
       --skip-grub) SKIP_GRUB=1 ;;
       --skip-desktop) SKIP_DESKTOP=1 ;;
+      --skip-apps) SKIP_APPS=1 ;;
       --no-sddm) ENABLE_SDDM=0 ;;
       --compositor)
         shift
@@ -1211,10 +1422,14 @@ parse_args() {
 }
 
 count_install_steps() {
-  # packages bun rust fastfetch omp font omz plugins links grub (+ optional desktop)
+  # base toolchain + optional desktop + extras (hw/codecs/perf/gaming/podman/apps)
   local n=10
   if (( ! SKIP_DESKTOP )); then
     n=$((n + 4))
+  fi
+  n=$((n + 5)) # amd codecs perf gaming podman
+  if (( ! SKIP_APPS )); then
+    n=$((n + 1))
   fi
   STEP_TOTAL=$n
   STEP_CURRENT=0
@@ -1238,6 +1453,7 @@ main() {
   else
     printf '  desk:    skipped (--skip-desktop)\n'
   fi
+  (( SKIP_APPS )) && printf '  apps:    skipped (--skip-apps)\n'
   (( DRY_RUN )) && printf '  mode:    dry-run\n'
   printf '\n'
 
@@ -1261,12 +1477,23 @@ main() {
     with_spinner "Installing SDDM theme" install_sddm_theme || true
   fi
 
+  with_spinner "Installing AMD GPU stack" install_amd_gpu || true
+  with_spinner "Installing video codecs" install_codecs || true
+  with_spinner "Applying performance tweaks" install_performance_tweaks || true
+  with_spinner "Installing gaming packages" install_gaming || true
+  with_spinner "Installing podman" install_podman || true
+
+  if (( ! SKIP_APPS )); then
+    with_spinner "Installing Flatpak apps + Cursor" install_flatpak_apps || true
+  fi
+
   ensure_zsh_shell
 
   printf '\n%sDone.%s Open a new terminal (or run: exec zsh).\n' "$C_GREEN" "$C_RESET"
   if (( ! SKIP_DESKTOP )); then
     printf 'Desktop: start a %s session from SDDM (or your login manager).\n' "$COMPOSITOR"
   fi
+  printf 'Gaming: gamemoderun gamescope -- steam\n'
   if [[ -d "$BACKUP_DIR" ]]; then
     printf 'Backups: %s\n' "$BACKUP_DIR"
   fi

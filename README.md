@@ -20,7 +20,8 @@ by hand. It provides:
 * Catppuccin Mocha GRUB theme
 * Optional Wayland rice: **SwayFX** / Niri / Hyprland plus Noctalia,
   DankMaterialShell, Caelestia, or compositor-only
-* bun, npm/npx, Rust, fastfetch, btop, yazi, Thunar, Okular, and JetBrainsMono Nerd Font
+* bun, npm/npx, Rust, **Ruby 4.0.2 (rbenv)**, GitHub CLI (`gh`), ripgrep/fd/fzf/jq/tmux,
+  fastfetch, btop, yazi, Thunar, Okular, and JetBrainsMono Nerd Font
 
 > [!CAUTION]
 > This is a personal setup, published for viewing. It is not a
@@ -61,6 +62,8 @@ This repository uses the following technologies:
 * Adds Flathub and installs a set of desktop Flatpaks; Cursor via official script.
 * Installs Oh My Zsh plus autosuggestions, syntax highlighting, and
   completions.
+* Installs GitHub CLI (`gh`), CLI search tools (`ripgrep`, `fd`, `fzf`, `jq`,
+  `tmux`), Ruby build deps, and **Ruby 4.0.2** via rbenv.
 * Skips work that is already done; safe to run again.
 
 ```mermaid
@@ -71,7 +74,7 @@ flowchart TD
   os -->|Other| fail["Exit unsupported"]
   fedora --> menu["Compositor + shell menus"]
   arch --> menu
-  menu --> tools["bun, rustup, fastfetch, oh-my-posh"]
+  menu --> tools["bun, rustup, rbenv Ruby, gh, CLI tools"]
   tools --> links["Link dotfiles + desktop"]
   links --> extras["AMD, codecs, zram, gaming, Flatpak"]
 ```
@@ -166,6 +169,27 @@ DPMS off after 10 minutes, and lock before sleep. Screenshots use
 
 Pass `--skip-desktop` for today’s terminal-only install (no compositor,
 shell, Rofi, or SDDM).
+
+## Dev tools
+
+Base package install includes:
+
+* **GitHub CLI** — `gh` (Fedora) / `github-cli` (Arch). After install: `gh auth login`
+* **CLI search / session** — `ripgrep` (`rg`), `fd`, `fzf`, `jq`, `tmux`
+* **Build helpers** — `gcc`, `make`, `pkgconf`, plus Ruby compile deps
+  (OpenSSL, readline, zlib, libyaml, libffi, gdbm, ncurses, sqlite headers)
+
+### Ruby (rbenv)
+
+Installs build dependencies and `ruby-build`, then:
+
+```bash
+rbenv install 4.0.2
+rbenv global 4.0.2
+```
+
+Idempotent: skips compile if `4.0.2` is already present. Requires network the
+first time. `.zshrc` already runs `eval "$(rbenv init -)"`.
 
 ## Hardware, codecs, gaming, and apps
 

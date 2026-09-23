@@ -1,0 +1,18 @@
+[Default Applications]
+text/html=com.brave.Browser.desktop
+x-scheme-handler/http=com.brave.Browser.desktop
+x-scheme-handler/https=com.brave.Browser.desktop
+x-scheme-handler/about=com.brave.Browser.desktop
+x-scheme-handler/unknown=com.brave.Browser.desktop
+application/pdf=org.kde.okular.desktop
+inode/directory=thunar.desktop
+image/png=imv.desktop
+image/jpeg=imv.desktop
+image/jpg=imv.desktop
+image/webp=imv.desktop
+image/gif=imv.desktop
+video/mp4=org.videolan.VLC.desktop
+video/x-matroska=org.videolan.VLC.desktop
+video/webm=org.videolan.VLC.desktop
+audio/mpeg=org.videolan.VLC.desktop
+audio/flac=org.videolan.VLC.desktop

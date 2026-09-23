@@ -1,0 +1,8 @@
+# myeow login dashboard — btop | cava | fastfetch
+# Used by: kitty --session ~/.config/kitty/dashboard.session
+
+layout splits
+
+launch --title btop btop
+launch --location=hsplit --title cava cava
+launch --location=vsplit --title fetch zsh -lc 'fastfetch; exec zsh'

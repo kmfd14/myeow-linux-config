@@ -217,6 +217,18 @@ Screenshots: Super+Shift+s (region), Print (full) via `grim` / `slurp`.
 
 Pass `--skip-desktop` for a terminal-only install.
 
+### Login dashboard
+
+On desktop login, `startup-dashboard.sh` opens Kitty with a three-pane
+session: **btop**, **cava**, and **fastfetch** (then a shell).
+
+Manual run:
+
+```bash
+startup-dashboard.sh
+# or: kitty --session ~/.config/kitty/dashboard.session
+```
+
 ## Dev tools
 
 | Tool | Notes |
@@ -327,6 +339,8 @@ KDE Connect, PeaZip, Sublime Text, Proton Pass, Proton VPN.
 | `dotfiles/sddm/sddm.conf.d/10-catppuccin.conf` | `/etc/sddm.conf.d/…` (copied) |
 | `dotfiles/xdg/mimeapps.list` | `~/.config/mimeapps.list` |
 | `scripts/cycle-power-profile.sh` | `~/.local/bin/cycle-power-profile.sh` |
+| `scripts/startup-dashboard.sh` | `~/.local/bin/startup-dashboard.sh` |
+| `dotfiles/kitty/dashboard.session` | `~/.config/kitty/dashboard.session` |
 | `dotfiles/waybar/` (`shell=none`) | `~/.config/waybar/` |
 
 Kitty: Catppuccin Frappé, JetBrainsMono Nerd Font size 9, opacity 0.85.
@@ -339,7 +353,8 @@ Prompt: Oh My Posh Catppuccin (`ZSH_THEME=""`). GRUB: Catppuccin Mocha at
 .
 ├── install.sh
 ├── scripts/
-│   └── cycle-power-profile.sh
+│   ├── cycle-power-profile.sh
+│   └── startup-dashboard.sh
 ├── assets/
 │   ├── banner.svg
 │   └── kitty_fastfetch_screenshot.png

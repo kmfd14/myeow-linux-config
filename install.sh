@@ -446,6 +446,7 @@ write_shell_autostart() {
           printf 'exec blueman-applet\n'
           printf 'exec waybar\n'
         fi
+        printf 'exec %s\n' "$HOME/.local/bin/startup-dashboard.sh"
       } >"$dest"
       ok "Wrote $dest"
       ;;
@@ -467,6 +468,7 @@ write_shell_autostart() {
           printf 'spawn-at-startup "blueman-applet"\n'
           printf 'spawn-at-startup "waybar"\n'
         fi
+        printf 'spawn-at-startup "%s"\n' "$HOME/.local/bin/startup-dashboard.sh"
       } >"$dest"
       ok "Wrote $dest"
       ;;
@@ -488,6 +490,7 @@ write_shell_autostart() {
           printf 'exec-once = blueman-applet\n'
           printf 'exec-once = waybar\n'
         fi
+        printf 'exec-once = %s\n' "$HOME/.local/bin/startup-dashboard.sh"
       } >"$dest"
       ok "Wrote $dest"
       ;;
@@ -1041,6 +1044,9 @@ install_kitty() {
   symlink "$src/kitty.conf" "$HOME/.config/kitty/kitty.conf"
   [[ -f "$src/current-theme.conf" ]] && symlink "$src/current-theme.conf" "$HOME/.config/kitty/current-theme.conf"
   symlink "$src/themes" "$HOME/.config/kitty/themes"
+  if [[ -f "$src/dashboard.session" ]]; then
+    symlink "$src/dashboard.session" "$HOME/.config/kitty/dashboard.session"
+  fi
 }
 
 install_zshrc() {
@@ -1226,14 +1232,24 @@ install_waybar_config() {
 install_session_helpers() {
   (( SKIP_DESKTOP )) && return 0
 
+  run mkdir -p "$HOME/.local/bin"
+
   local cycle_src="$REPO_ROOT/scripts/cycle-power-profile.sh"
   local cycle_dest="$HOME/.local/bin/cycle-power-profile.sh"
   if [[ -f "$cycle_src" ]]; then
-    run mkdir -p "$HOME/.local/bin"
     run chmod +x "$cycle_src"
     symlink "$cycle_src" "$cycle_dest"
   else
     warn "Missing $cycle_src"
+  fi
+
+  local dash_src="$REPO_ROOT/scripts/startup-dashboard.sh"
+  local dash_dest="$HOME/.local/bin/startup-dashboard.sh"
+  if [[ -f "$dash_src" ]]; then
+    run chmod +x "$dash_src"
+    symlink "$dash_src" "$dash_dest"
+  else
+    warn "Missing $dash_src"
   fi
 
   local mime_src="$DOTFILES/xdg/mimeapps.list"

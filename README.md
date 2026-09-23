@@ -14,7 +14,7 @@ by hand. It provides:
 
 * Distro detection for Fedora, Arch Linux, and NixOS
 * Idempotent symlinks with timestamped backups
-* Oh My Zsh, Catppuccin Frappé, and zsh plugins
+* Oh My Zsh plugins and Oh My Posh (Catppuccin Frappé prompt)
 * Catppuccin Mocha GRUB theme
 * bun, npm/npx, Rust, fastfetch, and JetBrainsMono Nerd Font
 
@@ -45,6 +45,7 @@ This repository uses the following technologies:
 * Installs Fedora packages with `dnf`, Arch packages with `pacman`.
 * On NixOS, prints nixpkgs names to add before linking dotfiles.
 * Links Kitty, `.zshrc`, and Cursor skill directories.
+* Installs Oh My Posh with Catppuccin.
 * Installs Catppuccin Mocha as the GRUB theme (Fedora/Arch).
 * Installs Oh My Zsh plus autosuggestions, syntax highlighting, and
   completions.
@@ -57,7 +58,7 @@ flowchart TD
   os -->|Arch| arch["pacman packages"]
   os -->|NixOS| nix["Print nixpkgs list"]
   os -->|Other| fail["Exit unsupported"]
-  fedora --> tools["bun, rustup, fastfetch"]
+  fedora --> tools["bun, rustup, fastfetch, oh-my-posh"]
   arch --> tools
   tools --> links["Link dotfiles"]
   nix --> links
@@ -67,7 +68,7 @@ flowchart TD
 
 You need Fedora, Arch Linux, or NixOS, plus `git` and `curl` on the
 PATH. Network access is required for Oh My Zsh, plugins, bun, rustup,
-and the Nerd Font.
+Oh My Posh, and the Nerd Font.
 
 1. Copy this repository onto the machine.
 2. Open a terminal in the repository root.
@@ -125,11 +126,12 @@ Linked paths:
 | Catppuccin zsh theme | `~/.oh-my-zsh/custom/themes/` |
 | `dotfiles/cursor/skills/` | `~/.cursor/skills` |
 | `dotfiles/cursor/agents/skills/` | `~/.cursor/agents/skills` |
+| `dotfiles/oh-my-posh/themes/catppuccin.omp.json` | `~/.config/oh-my-posh/themes/catppuccin.omp.json` |
 | `dotfiles/grub/catppuccin-mocha-grub-theme/` | `/usr/share/grub/themes/catppuccin-mocha-grub-theme/` |
 
 Kitty uses Catppuccin Frappé, JetBrainsMono Nerd Font at size 9, hidden
-decorations, padding, and 0.85 background opacity. zsh uses Oh My Zsh
-theme `catppuccin` with `CATPPUCCIN_FLAVOR="frappe"`. GRUB uses
+decorations, padding, and 0.85 background opacity. The prompt uses
+Oh My Posh with Catppuccin (`ZSH_THEME=""`). GRUB uses
 Catppuccin Mocha at `1920x1200,1920x1080,auto`.
 
 On NixOS, `install.sh` does not write `/etc/default/grub`. Point
@@ -164,6 +166,7 @@ Until that lands, `install.sh` on NixOS only links dotfiles.
 └── dotfiles/
     ├── kitty/
     ├── oh-my-zsh/
+    ├── oh-my-posh/
     ├── grub/
     └── cursor/
         ├── skills/
@@ -180,7 +183,8 @@ Until that lands, `install.sh` on NixOS only links dotfiles.
 | --- | --- |
 | [install.sh](./install.sh) | Installer source and `--help` text |
 | [kitty.conf](./dotfiles/kitty/kitty.conf) | Kitty appearance |
-| [.zshrc](./dotfiles/oh-my-zsh/.zshrc) | Oh My Zsh, PATH, and fastfetch |
+| [.zshrc](./dotfiles/oh-my-zsh/.zshrc) | Oh My Zsh, Oh My Posh, PATH, and fastfetch |
+| [Oh My Posh theme](./dotfiles/oh-my-posh/themes/catppuccin.omp.json) | Catppuccin prompt |
 | [GRUB default](./dotfiles/grub/default) | Theme and gfxmode used on this machine |
 
 ## Credits
@@ -200,6 +204,7 @@ projects:
 | Nerd Fonts | [ryanoasis/nerd-fonts](https://github.com/ryanoasis/nerd-fonts) |
 | fastfetch | [fastfetch-cli/fastfetch](https://github.com/fastfetch-cli/fastfetch) |
 | Bun | [oven-sh/bun](https://github.com/oven-sh/bun) |
+| Oh My Posh | [JanDeDobbeleer/oh-my-posh](https://github.com/JanDeDobbeleer/oh-my-posh) |
 | rustup | [rust-lang/rustup](https://github.com/rust-lang/rustup) |
 
 Cursor skills in `dotfiles/cursor/` are bundled from their own

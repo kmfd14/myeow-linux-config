@@ -8,8 +8,10 @@ export ZSH="$HOME/.oh-my-zsh"
 # load a random theme each time Oh My Zsh is loaded, in which case,
 # to know which specific one was loaded, run: echo $RANDOM_THEME
 # See https://github.com/ohmyzsh/ohmyzsh/wiki/Themes
-ZSH_THEME="catppuccin"
-CATPPUCCIN_FLAVOR="frappe"
+# ZSH_THEME="catppuccin"
+# CATPPUCCIN_FLAVOR="frappe"
+
+ZSH_THEME=""
 
 # Set list of themes to pick from when loading at random
 # Setting this variable when ZSH_THEME=random will cause zsh to load
@@ -72,10 +74,10 @@ CATPPUCCIN_FLAVOR="frappe"
 # Example format: plugins=(rails git textmate ruby lighthouse)
 # Add wisely, as too many plugins slow down shell startup.
 plugins=(
- git
- zsh-completions
- zsh-autosuggestions
- zsh-syntax-highlighting
+  git
+  zsh-completions
+  zsh-autosuggestions
+  zsh-syntax-highlighting
 )
 
 source $ZSH/oh-my-zsh.sh
@@ -125,4 +127,10 @@ export PATH="$PATH:/home/kmfdecena/.lmstudio/bin"
 # End of LM Studio CLI section
 
 export PATH="$HOME/.local/bin:$PATH"
+
+# oh-my-posh (Catppuccin)
+if command -v oh-my-posh >/dev/null; then
+  eval "$(oh-my-posh init zsh --config "$HOME/.oh-my-posh/themes/catppuccin.omp.json")"
+fi
+
 command -v fastfetch >/dev/null && fastfetch

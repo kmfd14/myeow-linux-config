@@ -35,8 +35,8 @@ usage() {
 Usage: ./install.sh [options]
 
 Symlinks Kitty, zsh, and Cursor configs from this repo, then installs the
-packages, toolchains (bun, npm/npx, Rust, fastfetch), Oh My Zsh plugins, and
-Catppuccin Mocha GRUB theme those configs expect.
+packages, toolchains (bun, npm/npx, Rust, fastfetch, oh-my-posh), Oh My Zsh
+plugins, and Catppuccin Mocha GRUB theme those configs expect.
 
 Supported systems: Fedora, Arch Linux, NixOS.
 
@@ -177,7 +177,7 @@ install_packages() {
 
 FEDORA_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs nodejs-npm grub2-tools)
 ARCH_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs npm grub)
-NIXOS_PACKAGES=(zsh git curl kitty unzip fontconfig gcc nodejs bun rustup fastfetch rbenv)
+NIXOS_PACKAGES=(zsh git curl kitty unzip fontconfig gcc nodejs bun rustup fastfetch rbenv oh-my-posh)
 
 install_packages_fedora() {
   log "Installing Fedora packages: ${FEDORA_PACKAGES[*]}"
@@ -242,6 +242,35 @@ install_bun() {
 
   curl -fsSL https://bun.sh/install | bash -s -- --no-modify-path
   ok "bun installed to $HOME/.bun"
+}
+
+install_oh_my_posh() {
+  local omp_bin="$HOME/.local/bin/oh-my-posh"
+  local theme_src="$DOTFILES/oh-my-posh/themes/catppuccin.omp.json"
+  local theme_dest="$HOME/.oh-my-posh/themes/catppuccin.omp.json"
+
+  [[ -f "$theme_src" ]] || die "Oh My Posh theme missing at $theme_src"
+
+  if (( SKIP_PACKAGES )); then
+    warn "Skipping oh-my-posh binary install"
+  elif [[ "$OS_FAMILY" == nixos ]]; then
+    warn "On NixOS, install oh-my-posh from nixpkgs instead of the upstream installer"
+  elif cmd_exists oh-my-posh "$omp_bin"; then
+    ok "oh-my-posh already installed"
+  else
+    log "Installing oh-my-posh"
+    if (( DRY_RUN )); then
+      ok "Would run: curl -s https://ohmyposh.dev/install.sh | bash -s -- -d $HOME/.local/bin"
+    else
+      mkdir -p "$HOME/.local/bin"
+      curl -s https://ohmyposh.dev/install.sh | bash -s -- -d "$HOME/.local/bin"
+      ok "oh-my-posh installed to $HOME/.local/bin"
+    fi
+  fi
+
+  log "Linking Oh My Posh theme"
+  run mkdir -p "$HOME/.oh-my-posh/themes"
+  symlink "$theme_src" "$theme_dest"
 }
 
 install_rust() {
@@ -566,6 +595,7 @@ main() {
     install_rust
     install_fastfetch
   fi
+  install_oh_my_posh
   install_nerd_font
   install_oh_my_zsh
   install_omz_plugins

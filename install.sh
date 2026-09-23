@@ -568,10 +568,10 @@ install_packages() {
 }
 
 FEDORA_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc make pkgconf-pkg-config
-  nodejs nodejs-npm grub2-tools btop Thunar okular
+  nodejs nodejs-npm grub2-tools btop Thunar okular cava
   gh ripgrep fd-find jq fzf tmux)
 ARCH_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc make pkgconf
-  nodejs npm grub btop thunar okular
+  nodejs npm grub btop thunar okular cava
   github-cli ripgrep fd jq fzf tmux)
 
 RUBY_VERSION="4.0.2"
@@ -1878,6 +1878,7 @@ print_post_install_notes() {
   printf '  Gaming:          gamemoderun gamescope -- steam\n'
   printf '  Cloudflare tunnel: cloudflared tunnel login && cloudflared tunnel run <name>\n'
   printf '  System monitor:  btop\n'
+  printf '  Audio visualizer: cava\n'
   printf '  Files (TUI):     yazi\n'
   printf '  PDF viewer:      okular\n'
   printf '  GitHub CLI:      gh auth login\n'

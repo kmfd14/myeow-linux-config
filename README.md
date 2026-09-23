@@ -77,7 +77,7 @@ It provides:
 **Dev**
 
 * bun, Rust (rustup), Ruby 4.0.2 via rbenv + build deps
-* GitHub CLI (`gh`), ripgrep, fd, fzf, jq, tmux
+* GitHub CLI (`gh`), ripgrep, fd, fzf, jq, tmux, cava
 * Cursor (official script), VS Code / Sublime / DBeaver Flatpaks
 
 **Hardware and apps**
@@ -223,6 +223,7 @@ Pass `--skip-desktop` for a terminal-only install.
 | --- | --- |
 | GitHub CLI | `gh` (Fedora) / `github-cli` (Arch) → `gh auth login` |
 | Search / session | `rg`, `fd`, `fzf`, `jq`, `tmux` |
+| Audio visualizer | [`cava`](https://github.com/karlstav/cava) — run `cava` (PipeWire/Pulse) |
 | Build helpers | `gcc`, `make`, `pkgconf`, Ruby compile deps |
 
 ### Ruby (rbenv)

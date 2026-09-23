@@ -84,7 +84,7 @@ usage() {
 Usage: ./install.sh [options]
 
 Symlinks Kitty, zsh, and Cursor configs from this repo, then installs the
-packages, toolchains (bun, npm/npx, Rust, fastfetch, btop, oh-my-posh), Oh My Zsh
+packages, toolchains (bun, npm/npx, Rust, fastfetch, btop, yazi, oh-my-posh), Oh My Zsh
 plugins, and Catppuccin Mocha GRUB theme those configs expect.
 
 Optionally installs a Wayland compositor (SwayFX, Niri, Hyprland), an optional
@@ -544,8 +544,8 @@ install_packages() {
   esac
 }
 
-FEDORA_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs nodejs-npm grub2-tools btop)
-ARCH_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs npm grub btop)
+FEDORA_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs nodejs-npm grub2-tools btop Thunar)
+ARCH_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs npm grub btop thunar)
 
 install_packages_fedora() {
   log "Installing Fedora packages: ${FEDORA_PACKAGES[*]}"
@@ -761,6 +761,40 @@ install_fastfetch_github() {
   install -m 755 "$binary" "$dest/fastfetch"
   rm -rf "$tmp"
   ok "fastfetch installed to $dest/fastfetch"
+}
+
+install_yazi() {
+  (( SKIP_PACKAGES )) && { warn "Skipping yazi"; return 0; }
+
+  if need_cmd yazi; then
+    ok "yazi already installed"
+    return 0
+  fi
+
+  log "Installing yazi"
+  if try_pkg_install yazi; then
+    need_cmd yazi && { ok "yazi from package manager"; return 0; }
+  fi
+
+  warn "yazi package missing — installing with cargo"
+  if (( DRY_RUN )); then
+    ok "Would: cargo install --locked yazi-fm yazi-cli"
+    return 0
+  fi
+
+  local cargo_bin="$HOME/.cargo/bin/cargo"
+  if ! cmd_exists cargo "$cargo_bin"; then
+    warn "cargo not available; skip yazi (install Rust first)"
+    return 0
+  fi
+
+  # Prefer cargo on PATH; fall back to rustup path
+  if need_cmd cargo; then
+    cargo install --locked yazi-fm yazi-cli
+  else
+    "$cargo_bin" install --locked yazi-fm yazi-cli
+  fi
+  ok "yazi installed via cargo (~/.cargo/bin)"
 }
 
 font_installed() {
@@ -1504,8 +1538,8 @@ parse_args() {
 }
 
 count_install_steps() {
-  # base toolchain + optional desktop + extras (hw/codecs/perf/gaming/podman/apps)
-  local n=10
+  # base toolchain + yazi + optional desktop + extras
+  local n=11
   if (( ! SKIP_DESKTOP )); then
     n=$((n + 4))
   fi
@@ -1545,6 +1579,7 @@ main() {
   with_spinner "Installing bun" install_bun || true
   with_spinner "Installing Rust" install_rust || true
   with_spinner "Installing fastfetch" install_fastfetch || true
+  with_spinner "Installing yazi" install_yazi || true
   with_spinner "Installing oh-my-posh" install_oh_my_posh || true
   with_spinner "Installing Nerd Font" install_nerd_font || true
   with_spinner "Installing Oh My Zsh" install_oh_my_zsh || true

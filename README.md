@@ -20,7 +20,7 @@ by hand. It provides:
 * Catppuccin Mocha GRUB theme
 * Optional Wayland rice: **SwayFX** / Niri / Hyprland plus Noctalia,
   DankMaterialShell, Caelestia, or compositor-only
-* bun, npm/npx, Rust, fastfetch, btop, and JetBrainsMono Nerd Font
+* bun, npm/npx, Rust, fastfetch, btop, yazi, Thunar, and JetBrainsMono Nerd Font
 
 > [!CAUTION]
 > This is a personal setup, published for viewing. It is not a

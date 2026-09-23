@@ -84,8 +84,8 @@ usage() {
 Usage: ./install.sh [options]
 
 Symlinks Kitty, zsh, and Cursor configs from this repo, then installs the
-packages, toolchains (bun, npm/npx, Rust, fastfetch, btop, yazi, oh-my-posh), Oh My Zsh
-plugins, and Catppuccin Mocha GRUB theme those configs expect.
+packages, toolchains (bun, npm/npx, Rust, fastfetch, btop, yazi, Thunar, Okular,
+oh-my-posh), Oh My Zsh plugins, and Catppuccin Mocha GRUB theme those configs expect.
 
 Optionally installs a Wayland compositor (SwayFX, Niri, Hyprland), an optional
 desktop shell (Noctalia, DankMaterial, Caelestia), New Wave Rofi or Noctalia
@@ -544,8 +544,8 @@ install_packages() {
   esac
 }
 
-FEDORA_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs nodejs-npm grub2-tools btop Thunar)
-ARCH_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs npm grub btop thunar)
+FEDORA_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs nodejs-npm grub2-tools btop Thunar okular)
+ARCH_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs npm grub btop thunar okular)
 
 install_packages_fedora() {
   log "Installing Fedora packages: ${FEDORA_PACKAGES[*]}"
@@ -1642,6 +1642,7 @@ print_post_install_notes() {
   printf '  Cloudflare tunnel: cloudflared tunnel login && cloudflared tunnel run <name>\n'
   printf '  System monitor:  btop\n'
   printf '  Files (TUI):     yazi\n'
+  printf '  PDF viewer:      okular\n'
   if (( ! SKIP_DESKTOP )); then
     printf '  Files (GUI):     thunar\n'
   fi

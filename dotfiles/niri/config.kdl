@@ -1,5 +1,5 @@
-// Minimal niri starter for myeow-linux-config.
-// Desktop shell autostart is written by install.sh into shell.kdl.
+// myeow niri config — work binds aligned with SwayFX rice
+// Desktop shell / shell=none tray autostart: shell.kdl (install.sh)
 
 input {
     touchpad {
@@ -11,7 +11,30 @@ input {
 
 binds {
     Mod+Return { spawn "kitty"; }
-    Mod+D { spawn "bash" "-c" "rofi -show drun"; }
+    Mod+T { spawn "kitty"; }
+    Mod+Space { spawn "bash" "-c" "bash $HOME/.config/rofi/launchers/type-7/launcher.sh"; }
+    Mod+E { spawn "thunar"; }
+    Mod+W { spawn "flatpak" "run" "com.brave.Browser"; }
+    Mod+C { spawn "cursor"; }
+    Mod+A { spawn "pavucontrol"; }
+    Mod+X { spawn "bash" "-c" "bash $HOME/.config/rofi/powermenu/type-3/powermenu.sh"; }
+    Mod+Shift+P { spawn "bash" "-c" "$HOME/.local/bin/cycle-power-profile.sh"; }
+    Mod+Shift+L { spawn "swaylock" "-f" "-c" "1e1e2e"; }
+
+    Mod+Shift+S { spawn "bash" "-c" "grim -g \"$(slurp)\" - | wl-copy"; }
+    Print { spawn "bash" "-c" "grim - | wl-copy"; }
+
+    XF86AudioRaiseVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "2%+" "-l" "1.5"; }
+    XF86AudioLowerVolume allow-when-locked=true { spawn "wpctl" "set-volume" "@DEFAULT_AUDIO_SINK@" "2%-"; }
+    XF86AudioMute allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SINK@" "toggle"; }
+    XF86AudioMicMute allow-when-locked=true { spawn "wpctl" "set-mute" "@DEFAULT_AUDIO_SOURCE@" "toggle"; }
+    XF86AudioPlay allow-when-locked=true { spawn "playerctl" "play-pause"; }
+    XF86AudioPause allow-when-locked=true { spawn "playerctl" "play-pause"; }
+    XF86AudioNext allow-when-locked=true { spawn "playerctl" "next"; }
+    XF86AudioPrev allow-when-locked=true { spawn "playerctl" "previous"; }
+    XF86MonBrightnessUp allow-when-locked=true { spawn "brightnessctl" "set" "5%+"; }
+    XF86MonBrightnessDown allow-when-locked=true { spawn "brightnessctl" "set" "5%-"; }
+
     Mod+Shift+E { quit; }
     Mod+Q { close-window; }
     Mod+F { fullscreen-window; }

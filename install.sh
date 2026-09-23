@@ -1410,7 +1410,7 @@ install_cloudflared() {
     return 0
   fi
 
-  log "Installing cloudflared (for Jellyfin Cloudflare tunnels)"
+  log "Installing cloudflared (Cloudflare tunnels)"
   case "$OS_FAMILY" in
     fedora)
       enable_cloudflared_fedora_repo || true
@@ -1639,7 +1639,7 @@ print_post_install_notes() {
 
   printf '\n%sHandy commands%s\n' "$C_BOLD" "$C_RESET"
   printf '  Gaming:          gamemoderun gamescope -- steam\n'
-  printf '  Jellyfin tunnel: cloudflared tunnel login && cloudflared tunnel run <name>\n'
+  printf '  Cloudflare tunnel: cloudflared tunnel login && cloudflared tunnel run <name>\n'
   printf '  System monitor:  btop\n'
   printf '  Files (TUI):     yazi\n'
   if (( ! SKIP_DESKTOP )); then

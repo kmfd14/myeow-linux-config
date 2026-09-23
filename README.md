@@ -159,16 +159,15 @@ not installed.
 * Launch pattern: `gamemoderun gamescope -- steam`
 * Steam is not installed as a Flatpak so wrappers work
 
-### cloudflared (Jellyfin tunnels)
+### cloudflared (Cloudflare tunnels)
 
-Installs the Cloudflare tunnel client for exposing Jellyfin (and other
-services) via Cloudflare:
+Installs the Cloudflare tunnel client for exposing local services through
+Cloudflare (for example Jellyfin, or any other HTTP/TCP service):
 
 * Fedora: Cloudflare RPM repo (`pkg.cloudflare.com`), with GitHub binary fallback
 * Arch: pacman if available, otherwise GitHub binary
 
-The installer does **not** create or login a tunnel. After install, use your
-existing flow, for example:
+The installer does **not** create or login a tunnel. After install:
 
 ```bash
 cloudflared tunnel login

@@ -25,7 +25,7 @@ fi
 term_cmd='alacritty'
 file_cmd='thunar'
 text_cmd='geany'
-web_cmd='firefox'
+web_cmd='flatpak run com.brave.Browser'
 music_cmd='alacritty -e ncmpcpp'
 setting_cmd='xfce4-settings-manager'
 

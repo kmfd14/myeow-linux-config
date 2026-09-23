@@ -84,7 +84,7 @@ usage() {
 Usage: ./install.sh [options]
 
 Symlinks Kitty, zsh, and Cursor configs from this repo, then installs the
-packages, toolchains (bun, npm/npx, Rust, fastfetch, oh-my-posh), Oh My Zsh
+packages, toolchains (bun, npm/npx, Rust, fastfetch, btop, oh-my-posh), Oh My Zsh
 plugins, and Catppuccin Mocha GRUB theme those configs expect.
 
 Optionally installs a Wayland compositor (SwayFX, Niri, Hyprland), an optional
@@ -544,8 +544,8 @@ install_packages() {
   esac
 }
 
-FEDORA_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs nodejs-npm grub2-tools)
-ARCH_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs npm grub)
+FEDORA_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs nodejs-npm grub2-tools btop)
+ARCH_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs npm grub btop)
 
 install_packages_fedora() {
   log "Installing Fedora packages: ${FEDORA_PACKAGES[*]}"

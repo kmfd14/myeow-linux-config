@@ -85,8 +85,9 @@ usage() {
 Usage: ./install.sh [options]
 
 Symlinks Kitty, zsh, and Cursor configs from this repo, then installs the
-packages, toolchains (bun, npm/npx, Rust, fastfetch, btop, yazi, Thunar, Okular,
-oh-my-posh), Oh My Zsh plugins, and Catppuccin Mocha GRUB theme those configs expect.
+packages, toolchains (bun, npm/npx, Rust, rbenv/Ruby, gh, ripgrep/fd/fzf/jq/tmux,
+fastfetch, btop, yazi, Thunar, Okular, oh-my-posh), Oh My Zsh plugins, and
+Catppuccin Mocha GRUB theme those configs expect.
 
 Optionally installs a Wayland compositor (SwayFX, Niri, Hyprland), an optional
 desktop shell (Noctalia, DankMaterial, Caelestia), New Wave Rofi or Noctalia
@@ -566,13 +567,29 @@ install_packages() {
   esac
 }
 
-FEDORA_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs nodejs-npm grub2-tools btop Thunar okular)
-ARCH_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc nodejs npm grub btop thunar okular)
+FEDORA_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc make pkgconf-pkg-config
+  nodejs nodejs-npm grub2-tools btop Thunar okular
+  gh ripgrep fd-find jq fzf tmux)
+ARCH_PACKAGES=(zsh git curl kitty rbenv unzip fontconfig gcc make pkgconf
+  nodejs npm grub btop thunar okular
+  github-cli ripgrep fd jq fzf tmux)
+
+RUBY_VERSION="4.0.2"
 
 install_packages_fedora() {
   log "Installing Fedora packages: ${FEDORA_PACKAGES[*]}"
   sudo_if_needed dnf install -y "${FEDORA_PACKAGES[@]}"
   confirm_node_tools
+  # Fedora fd-find provides `fd` on recent releases; older may ship `fdfind`
+  if need_cmd fdfind && ! need_cmd fd; then
+    run mkdir -p "$HOME/.local/bin"
+    if (( ! DRY_RUN )); then
+      ln -sfn "$(command -v fdfind)" "$HOME/.local/bin/fd"
+      ok "Linked fdfind → ~/.local/bin/fd"
+    else
+      ok "Would link fdfind → ~/.local/bin/fd"
+    fi
+  fi
 }
 
 install_packages_arch() {
@@ -764,6 +781,77 @@ install_rust() {
 
   curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs | sh -s -- -y --no-modify-path
   ok "Rust installed to $HOME/.cargo"
+}
+
+install_ruby_build_deps() {
+  (( SKIP_PACKAGES )) && { warn "Skipping Ruby build dependencies"; return 0; }
+
+  log "Installing Ruby build dependencies"
+  case "$OS_FAMILY" in
+    fedora)
+      try_pkg_install gcc make patch bzip2 openssl-devel readline-devel zlib-devel \
+        libyaml-devel libffi-devel gdbm-devel ncurses-devel autoconf bison \
+        sqlite-devel ruby-build || true
+      ;;
+    arch)
+      try_pkg_install base-devel openssl readline zlib libyaml libffi gdbm ncurses \
+        sqlite ruby-build || true
+      ;;
+  esac
+  ok "Ruby build dependencies attempted"
+}
+
+ensure_ruby_build_plugin() {
+  # Prefer distro ruby-build; fall back to rbenv plugin clone
+  if need_cmd ruby-build; then
+    ok "ruby-build on PATH"
+    return 0
+  fi
+  local plugin="$HOME/.rbenv/plugins/ruby-build"
+  if [[ -d "$plugin/.git" ]] || [[ -x "$plugin/bin/ruby-build" ]]; then
+    ok "ruby-build plugin already present"
+    return 0
+  fi
+  log "Cloning ruby-build into ~/.rbenv/plugins"
+  if (( DRY_RUN )); then
+    ok "Would git clone rbenv/ruby-build → $plugin"
+    return 0
+  fi
+  run mkdir -p "$HOME/.rbenv/plugins"
+  git clone --depth 1 https://github.com/rbenv/ruby-build.git "$plugin" \
+    || warn "ruby-build clone failed"
+}
+
+install_ruby() {
+  (( SKIP_PACKAGES )) && { warn "Skipping Ruby $RUBY_VERSION"; return 0; }
+
+  install_ruby_build_deps
+  ensure_ruby_build_plugin
+
+  if ! need_cmd rbenv; then
+    warn "rbenv not on PATH — install base packages first"
+    return 0
+  fi
+
+  # Ensure rbenv shims are available in this script session
+  export PATH="$HOME/.rbenv/bin:$HOME/.rbenv/shims:$PATH"
+  eval "$(rbenv init - bash 2>/dev/null || rbenv init - 2>/dev/null || true)"
+
+  if rbenv versions --bare 2>/dev/null | grep -qx "$RUBY_VERSION"; then
+    ok "Ruby $RUBY_VERSION already installed via rbenv"
+  else
+    log "Installing Ruby $RUBY_VERSION with rbenv (may take several minutes)"
+    if (( DRY_RUN )); then
+      ok "Would run: rbenv install $RUBY_VERSION && rbenv global $RUBY_VERSION"
+      return 0
+    fi
+    rbenv install -s "$RUBY_VERSION" \
+      || { warn "rbenv install $RUBY_VERSION failed"; return 0; }
+  fi
+
+  rbenv global "$RUBY_VERSION" || warn "Could not set rbenv global $RUBY_VERSION"
+  rbenv rehash 2>/dev/null || true
+  ok "Ruby $(rbenv version 2>/dev/null || echo "$RUBY_VERSION") active via rbenv"
 }
 
 install_fastfetch() {
@@ -1724,6 +1812,7 @@ main() {
   with_spinner "Installing base packages" install_packages || true
   with_spinner "Installing bun" install_bun || true
   with_spinner "Installing Rust" install_rust || true
+  with_spinner "Installing Ruby $RUBY_VERSION (rbenv)" install_ruby || true
   with_spinner "Installing fastfetch" install_fastfetch || true
   with_spinner "Installing yazi" install_yazi || true
   with_spinner "Installing oh-my-posh" install_oh_my_posh || true
@@ -1791,6 +1880,10 @@ print_post_install_notes() {
   printf '  System monitor:  btop\n'
   printf '  Files (TUI):     yazi\n'
   printf '  PDF viewer:      okular\n'
+  printf '  GitHub CLI:      gh auth login\n'
+  printf '  Ruby:            ruby -v   # rbenv global %s\n' "$RUBY_VERSION"
+  printf '  Search:          rg / fd / fzf / jq\n'
+  printf '  Sessions:        tmux\n'
   printf '  Brightness:      brightnessctl set 5%%+\n'
   printf '  Volume out:      wpctl set-volume @DEFAULT_AUDIO_SINK@ 2%%+\n'
   printf '  Mic mute:        wpctl set-mute @DEFAULT_AUDIO_SOURCE@ toggle\n'

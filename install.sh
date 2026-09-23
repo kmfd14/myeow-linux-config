@@ -49,6 +49,8 @@ FLATHUB_APPS=(
   org.kde.kdeconnect
   io.github.peazip.PeaZip
   com.sublimehq.SublimeText
+  me.proton.Pass
+  com.protonvpn.www
 )
 # Cursor is not reliably on Flathub; installed via official script when missing
 CURSOR_INSTALL_URL="https://cursor.com/install"
@@ -437,10 +439,11 @@ write_shell_autostart() {
         if [[ -n "$cmd" ]]; then
           printf 'exec %s\n' "$cmd"
         else
-          printf '# no desktop shell — minimal tray stack\n'
+          printf '# no desktop shell — mako + applets + waybar\n'
           printf 'exec mako\n'
           printf 'exec nm-applet\n'
           printf 'exec blueman-applet\n'
+          printf 'exec waybar\n'
         fi
       } >"$dest"
       ok "Wrote $dest"
@@ -457,10 +460,11 @@ write_shell_autostart() {
         if [[ -n "$cmd" ]]; then
           printf 'spawn-at-startup "sh" "-c" "%s"\n' "$cmd"
         else
-          printf '// no desktop shell — minimal tray stack\n'
+          printf '// no desktop shell — mako + applets + waybar\n'
           printf 'spawn-at-startup "mako"\n'
           printf 'spawn-at-startup "nm-applet"\n'
           printf 'spawn-at-startup "blueman-applet"\n'
+          printf 'spawn-at-startup "waybar"\n'
         fi
       } >"$dest"
       ok "Wrote $dest"
@@ -477,10 +481,11 @@ write_shell_autostart() {
         if [[ -n "$cmd" ]]; then
           printf 'exec-once = %s\n' "$cmd"
         else
-          printf '# no desktop shell — minimal tray stack\n'
+          printf '# no desktop shell — mako + applets + waybar\n'
           printf 'exec-once = mako\n'
           printf 'exec-once = nm-applet\n'
           printf 'exec-once = blueman-applet\n'
+          printf 'exec-once = waybar\n'
         fi
       } >"$dest"
       ok "Wrote $dest"
@@ -633,7 +638,7 @@ install_desktop_packages() {
         noctalia)  shell_pkgs=(noctalia) ;;
         material)  shell_pkgs=(quickshell qt6-qtbase qt6-qtdeclarative qt6-qtwayland) ;;
         celestial) shell_pkgs=(quickshell qt6-qtbase qt6-qtdeclarative qt6-qtwayland qt6-qtmultimedia cmake ninja) ;;
-        none)      shell_none_pkgs=(mako NetworkManager-applet) ;;
+        none)      shell_none_pkgs=(mako NetworkManager-applet waybar) ;;
       esac
       rofi_pkg=rofi-wayland
       ;;
@@ -660,7 +665,7 @@ install_desktop_packages() {
         noctalia)  shell_pkgs=(noctalia) ;;
         material)  shell_pkgs=(quickshell qt6-base qt6-declarative qt6-wayland) ;;
         celestial) shell_pkgs=(quickshell qt6-base qt6-declarative qt6-wayland qt6-multimedia cmake ninja) ;;
-        none)      shell_none_pkgs=(mako network-manager-applet) ;;
+        none)      shell_none_pkgs=(mako network-manager-applet waybar) ;;
       esac
       rofi_pkg=rofi
       ;;
@@ -1110,6 +1115,24 @@ install_desktop_configs() {
 
   write_shell_autostart
   install_session_helpers
+  install_waybar_config
+}
+
+install_waybar_config() {
+  (( SKIP_DESKTOP )) && return 0
+  [[ "$DESKTOP_SHELL" == none ]] || {
+    ok "Skipping waybar config (only used when shell=none)"
+    return 0
+  }
+  local src="$DOTFILES/waybar"
+  [[ -d "$src" ]] || {
+    warn "Waybar config missing at $src"
+    return 0
+  }
+  run mkdir -p "$HOME/.config/waybar"
+  symlink "$src/config.jsonc" "$HOME/.config/waybar/config.jsonc"
+  symlink "$src/style.css" "$HOME/.config/waybar/style.css"
+  ok "Linked waybar config (shell=none)"
 }
 
 install_session_helpers() {
@@ -1151,6 +1174,34 @@ install_laptop_logind() {
     'HandleLidSwitchDocked=ignore' \
     | sudo_if_needed tee "$conf" >/dev/null
   ok "Wrote $conf (restart systemd-logind or reboot to apply lid handling)"
+}
+
+install_cups() {
+  (( SKIP_PACKAGES )) && { warn "Skipping CUPS printing"; return 0; }
+
+  log "Installing CUPS printing stack"
+  case "$OS_FAMILY" in
+    fedora)
+      try_pkg_install cups cups-client cups-filters cups-browsed \
+        system-config-printer avahi nss-mdns || true
+      ;;
+    arch)
+      try_pkg_install cups cups-filters cups-browsed \
+        system-config-printer avahi nss-mdns || true
+      ;;
+  esac
+
+  if (( DRY_RUN )); then
+    ok "Would enable --now cups.socket cups.service avahi-daemon.service"
+    return 0
+  fi
+  sudo_if_needed systemctl enable --now cups.socket 2>/dev/null \
+    || sudo_if_needed systemctl enable --now cups.service 2>/dev/null \
+    || warn "Could not enable cups"
+  sudo_if_needed systemctl enable --now cups.service 2>/dev/null || true
+  sudo_if_needed systemctl enable --now avahi-daemon.service 2>/dev/null \
+    || warn "Could not enable avahi-daemon (network printer discovery)"
+  ok "CUPS printing stack attempted — configure printers with system-config-printer or http://localhost:631"
 }
 
 install_sddm_theme() {
@@ -1692,6 +1743,7 @@ main() {
   with_spinner "Installing AMD GPU stack" install_amd_gpu || true
   with_spinner "Installing video codecs" install_codecs || true
   with_spinner "Applying performance tweaks" install_performance_tweaks || true
+  with_spinner "Installing CUPS printing" install_cups || true
   with_spinner "Installing gaming packages" install_gaming || true
   with_spinner "Installing podman" install_podman || true
   with_spinner "Installing cloudflared" install_cloudflared || true
@@ -1746,10 +1798,16 @@ print_post_install_notes() {
   printf '  Power profile:   powerprofilesctl set balanced\n'
   printf '  Cycle profile:   cycle-power-profile.sh   (Super+Shift+P)\n'
   printf '  Battery:         upower -i "$(upower -e | grep BAT | head -1)"\n'
+  printf '  Printers:        system-config-printer   # or http://localhost:631\n'
+  printf '  Proton Pass:     flatpak run me.proton.Pass\n'
+  printf '  Proton VPN:      flatpak run com.protonvpn.www\n'
   if (( ! SKIP_DESKTOP )); then
     printf '  Files (GUI):     thunar\n'
     printf '  Powermenu:       Super+X\n'
     printf '  Screenshots:     Super+Shift+S (region) / Print (full)\n'
+    if [[ "${DESKTOP_SHELL:-}" == none ]]; then
+      printf '  Status bar:      waybar (shell=none)\n'
+    fi
   fi
 }
 

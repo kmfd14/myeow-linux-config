@@ -18,7 +18,7 @@ by hand. It provides:
 * Idempotent symlinks with timestamped backups
 * Oh My Zsh plugins and Oh My Posh (Catppuccin prompt)
 * Catppuccin Mocha GRUB theme
-* Optional Wayland rice: Sway / Niri / Hyprland plus Noctalia,
+* Optional Wayland rice: **SwayFX** / Niri / Hyprland plus Noctalia,
   DankMaterialShell, Caelestia, or compositor-only
 * bun, npm/npx, Rust, fastfetch, and JetBrainsMono Nerd Font
 
@@ -48,10 +48,12 @@ This repository uses the following technologies:
 * Links Kitty, `.zshrc`, Oh My Posh theme, and Cursor skill directories.
 * Installs Oh My Posh with Catppuccin.
 * Installs Catppuccin Mocha as the GRUB theme.
-* Offers a Catppuccin-styled compositor menu (Sway, Niri, Hyprland) and
+* Offers a Catppuccin-styled compositor menu (**SwayFX**, Niri, Hyprland) and
   desktop shell menu (Noctalia, Material, Celestial, None).
-* Links New Wave Rofi, installs Catppuccin Mocha SDDM, and writes a
-  shell autostart snippet for the chosen compositor.
+* When Noctalia is selected, offers an app launcher menu (Rofi or Noctalia
+  built-in); **Super+Space** opens the chosen launcher.
+* Links New Wave Rofi (when selected), installs Catppuccin Mocha SDDM, and
+  writes shell/menu snippets for the chosen compositor.
 * Installs Oh My Zsh plus autosuggestions, syntax highlighting, and
   completions.
 * Skips work that is already done; safe to run again.
@@ -91,22 +93,34 @@ Replaced files go to `~/.dotfiles-backup/<timestamp>/`.
 
 ## Desktop choices
 
-On an interactive terminal, after OS detection, `install.sh` shows two
-numbered menus (skipped when the matching flag is set):
+On an interactive terminal, after OS detection, `install.sh` shows numbered
+menus (skipped when the matching flag is set):
 
-1. **Compositor** — `1` Sway (default), `2` Niri, `3` Hyprland
+1. **Compositor** — `1` SwayFX (default), `2` Niri, `3` Hyprland
 2. **Desktop shell** — `1` Noctalia, `2` Material (DankMaterialShell),
    `3` Celestial (Caelestia), `4` None
+3. **App launcher** (only if shell is Noctalia) — `1` Rofi (New Wave),
+   `2` Noctalia built-in
 
-It then confirms compositor, shell, and whether to enable SDDM (default
-yes). Shell names map to upstream projects (not zsh):
+It then confirms compositor, shell, launcher, and whether to enable SDDM
+(default yes). **Super** is the Windows key (`Mod4`).
+
+Shell names map to upstream projects (not zsh):
 
 | Choice | Upstream |
 | --- | --- |
 | `noctalia` | [noctalia-dev/noctalia-shell](https://github.com/noctalia-dev/noctalia-shell) |
 | `material` | [AvengeMedia/DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) |
 | `celestial` | [caelestia-dots/shell](https://github.com/caelestia-dots/shell) |
-| `none` | Compositor only (Sway keeps the New Wave config and distro bar) |
+| `none` | Compositor only (SwayFX rice without a desktop shell) |
+
+### SwayFX rice
+
+Choosing Sway installs **SwayFX** (not stock Sway) with an end-4–inspired
+look: rounded corners, blur, shadows, dim inactive windows, snappy
+animations, and Windows-like tiling keybinds. Visual reference only —
+end-4 Quickshell is not ported. Config lives under `dotfiles/sway/`
+(`config` + `config.d/`).
 
 Pass `--skip-desktop` for today’s terminal-only install (no compositor,
 shell, Rofi, or SDDM).
@@ -123,6 +137,7 @@ Non-interactive desktop preview:
 
 ```bash
 ./install.sh --dry-run --compositor sway --shell none
+./install.sh --dry-run --compositor sway --shell noctalia --launcher noctalia
 ```
 
 Link configs only, and skip packages, bun, rustup, and fastfetch:
@@ -148,8 +163,9 @@ Terminal-only (no Wayland rice):
 | `--skip-fonts` | Do not install JetBrainsMono Nerd Font |
 | `--skip-grub` | Do not install the GRUB theme |
 | `--skip-desktop` | Terminal-only install (no compositor / shell / SDDM) |
-| `--compositor sway\|niri\|hyprland` | Skip the compositor menu |
+| `--compositor sway\|niri\|hyprland` | Skip the compositor menu (`sway` → SwayFX) |
 | `--shell noctalia\|material\|celestial\|none` | Skip the shell menu |
+| `--launcher rofi\|noctalia` | App launcher; `noctalia` only with `--shell noctalia` (Super+Space) |
 | `--no-sddm` | Install desktop pieces but do not enable SDDM |
 | `--dry-run` | Print actions without changing the system |
 
@@ -164,7 +180,8 @@ Linked paths:
 | `dotfiles/cursor/agents/skills/` | `~/.cursor/agents/skills` |
 | `dotfiles/oh-my-posh/themes/catppuccin.omp.json` | `~/.oh-my-posh/themes/catppuccin.omp.json` |
 | `dotfiles/grub/catppuccin-mocha-grub-theme/` | `/usr/share/grub/themes/catppuccin-mocha-grub-theme/` |
-| `dotfiles/sway/config` | `~/.config/sway/config` |
+| `dotfiles/sway/config` + `config.d/` | `~/.config/sway/` (SwayFX rice) |
+| `wallpapers/lofi-japanese-…jpg` | `~/.config/sway/wallpaper.jpg` |
 | `dotfiles/niri/config.kdl` | `~/.config/niri/config.kdl` |
 | `dotfiles/hypr/hyprland.conf` | `~/.config/hypr/hyprland.conf` |
 | `dotfiles/rofi/` | `~/.config/rofi` |
@@ -193,12 +210,14 @@ Cursor’s integrated terminal both need `JetBrainsMono Nerd Font`).
 ├── assets/
 │   ├── banner.svg
 │   └── kitty_fastfetch_screenshot.png
+├── wallpapers/
 └── dotfiles/
     ├── kitty/
     ├── oh-my-zsh/
     ├── oh-my-posh/
     ├── grub/
     ├── sway/
+    │   └── config.d/
     ├── niri/
     ├── hypr/
     ├── rofi/
@@ -221,7 +240,7 @@ Cursor’s integrated terminal both need `JetBrainsMono Nerd Font`).
 | [.zshrc](./dotfiles/oh-my-zsh/.zshrc) | Oh My Zsh, Oh My Posh, PATH, and fastfetch |
 | [Oh My Posh theme](./dotfiles/oh-my-posh/themes/catppuccin.omp.json) | Catppuccin prompt |
 | [GRUB default](./dotfiles/grub/default) | Theme and gfxmode used on this machine |
-| [Sway config](./dotfiles/sway/config) | New Wave–based Sway starter |
+| [SwayFX config](./dotfiles/sway/config) | Modular SwayFX rice (end-4 visual reference) |
 | [Rofi](./dotfiles/rofi/) | New Wave Rofi launchers and applets |
 
 ## Credits
@@ -236,7 +255,9 @@ projects:
 | Catppuccin for Kitty | [catppuccin/kitty](https://github.com/catppuccin/kitty) |
 | Catppuccin for GRUB | [catppuccin/grub](https://github.com/catppuccin/grub) |
 | Catppuccin for SDDM | [catppuccin/sddm](https://github.com/catppuccin/sddm) |
-| New Wave (Sway + Rofi) | [LoneWolf4713/new-wave](https://github.com/LoneWolf4713/new-wave) |
+| New Wave (Rofi) | [LoneWolf4713/new-wave](https://github.com/LoneWolf4713/new-wave) |
+| SwayFX | [WillPower3309/swayfx](https://github.com/WillPower3309/swayfx) |
+| end-4 dots (inspiration) | [end-4/dots-hyprland](https://github.com/end-4/dots-hyprland) |
 | Noctalia | [noctalia-dev/noctalia-shell](https://github.com/noctalia-dev/noctalia-shell) |
 | DankMaterialShell | [AvengeMedia/DankMaterialShell](https://github.com/AvengeMedia/DankMaterialShell) |
 | Caelestia shell | [caelestia-dots/shell](https://github.com/caelestia-dots/shell) |
